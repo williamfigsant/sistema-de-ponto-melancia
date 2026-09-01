@@ -42,6 +42,8 @@ export default async function ColaboradorPage({
   const entries = await getEntriesForUser(member.userId, sinceISO)
   const totals = aggregateDays(entries, member)
   const scheduled = scheduledMinutesForStaff(member)
+  // "2024-01-06" é um sábado — usado só para calcular a carga de sábado.
+  const scheduledSaturday = scheduledMinutesForStaff(member, "2024-01-06")
 
   return (
     <div className="min-h-screen bg-secondary/30">
@@ -88,10 +90,16 @@ export default async function ColaboradorPage({
                 )}
               </div>
               <p className="text-sm text-muted-foreground">
-                Jornada cadastrada: {member.entryTime ?? "--:--"} às{" "}
+                Seg a sex: {member.entryTime ?? "--:--"} às{" "}
                 {member.exitTime ?? "--:--"}
                 {scheduled > 0 && ` (${formatMinutes(scheduled)}/dia)`}
               </p>
+              {member.satEntryTime && member.satExitTime && (
+                <p className="text-sm text-muted-foreground">
+                  Sábado: {member.satEntryTime} às {member.satExitTime}
+                  {scheduledSaturday > 0 && ` (${formatMinutes(scheduledSaturday)}/dia)`}
+                </p>
+              )}
             </div>
             <div className="flex flex-wrap gap-2 print-hidden">
               <AddEntryDialog member={member} />

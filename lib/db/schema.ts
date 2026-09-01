@@ -75,10 +75,15 @@ export const staff = pgTable("staff", {
   userId: text("userId").notNull().unique(),
   name: text("name").notNull(),
   role: text("role").notNull().default("employee"), // 'employee' | 'admin'
-  entryTime: text("entryTime"), // "08:00"
-  lunchStart: text("lunchStart"), // "12:00"
-  lunchEnd: text("lunchEnd"), // "13:00"
-  exitTime: text("exitTime"), // "18:00"
+  entryTime: text("entryTime"), // "09:00" (seg-sex)
+  lunchStart: text("lunchStart"), // "12:00" (seg-sex)
+  lunchEnd: text("lunchEnd"), // "13:00" (seg-sex)
+  exitTime: text("exitTime"), // "18:00" (seg-sex)
+  // Jornada de sábado (horário diferenciado). Se vazio, usa a jornada padrão.
+  satEntryTime: text("satEntryTime"), // "09:00" (sáb)
+  satLunchStart: text("satLunchStart"), // "12:00" (sáb)
+  satLunchEnd: text("satLunchEnd"), // "13:00" (sáb)
+  satExitTime: text("satExitTime"), // "16:00" (sáb)
   active: boolean("active").notNull().default(true),
   createdAt: timestamp("createdAt").notNull().defaultNow(),
 })
