@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/card"
 import { getEntriesForUser, listStaff } from "@/lib/queries"
 import { requireAdmin } from "@/lib/session"
-import { aggregateDays } from "@/lib/time-utils"
+import { aggregateDays, currentMonthStartISO } from "@/lib/time-utils"
 
 export default async function AdminPage() {
   const admin = await requireAdmin()
@@ -20,9 +20,7 @@ export default async function AdminPage() {
   const employees = allStaff.filter((s) => s.role === "employee")
 
   // Totais do mês corrente por colaborador para o resumo global.
-  const since = new Date()
-  since.setDate(1)
-  const sinceISO = since.toISOString().slice(0, 10)
+  const sinceISO = currentMonthStartISO()
 
   let totalOvertime = 0
   let totalDeficit = 0

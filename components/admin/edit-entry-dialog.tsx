@@ -15,18 +15,10 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import type { TimeEntry } from "@/lib/db/schema"
-import { formatDateBR } from "@/lib/time-utils"
+import { formatDateBR, toTimeInputValue } from "@/lib/time-utils"
 import { useRouter } from "next/navigation"
-import { useState, useTransition } from "react"
+import { useTransition } from "react"
 import { toast } from "sonner"
-
-function toTimeValue(value: Date | string | null): string {
-  if (!value) return ""
-  const d = typeof value === "string" ? new Date(value) : value
-  const h = String(d.getHours()).padStart(2, "0")
-  const m = String(d.getMinutes()).padStart(2, "0")
-  return `${h}:${m}`
-}
 
 export function EditEntryDialog({
   employeeUserId,
@@ -79,7 +71,7 @@ export function EditEntryDialog({
                 id="clockIn"
                 name="clockIn"
                 type="time"
-                defaultValue={toTimeValue(entry?.clockIn ?? null)}
+                defaultValue={toTimeInputValue(entry?.clockIn ?? null)}
               />
             </div>
             <div className="grid gap-1.5">
@@ -90,7 +82,7 @@ export function EditEntryDialog({
                 id="clockOut"
                 name="clockOut"
                 type="time"
-                defaultValue={toTimeValue(entry?.clockOut ?? null)}
+                defaultValue={toTimeInputValue(entry?.clockOut ?? null)}
               />
             </div>
             <div className="grid gap-1.5">
@@ -101,7 +93,7 @@ export function EditEntryDialog({
                 id="lunchStart"
                 name="lunchStart"
                 type="time"
-                defaultValue={toTimeValue(entry?.lunchStart ?? null)}
+                defaultValue={toTimeInputValue(entry?.lunchStart ?? null)}
               />
             </div>
             <div className="grid gap-1.5">
@@ -112,7 +104,7 @@ export function EditEntryDialog({
                 id="lunchEnd"
                 name="lunchEnd"
                 type="time"
-                defaultValue={toTimeValue(entry?.lunchEnd ?? null)}
+                defaultValue={toTimeInputValue(entry?.lunchEnd ?? null)}
               />
             </div>
           </div>

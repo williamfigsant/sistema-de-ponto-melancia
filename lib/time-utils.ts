@@ -1,5 +1,14 @@
 import type { Staff, TimeEntry } from "@/lib/db/schema"
 
+/**
+ * Fuso horário oficial da loja (Brasília). O Brasil não adota mais horário
+ * de verão desde 2019, então o deslocamento é fixo em -03:00. Usamos isto
+ * tanto para exibir horários (independente do fuso do servidor, que roda em
+ * UTC) quanto para interpretar horários digitados pelo admin.
+ */
+export const TIMEZONE = "America/Sao_Paulo"
+export const TZ_OFFSET = "-03:00"
+
 /** Converte "HH:MM" em minutos desde meia-noite. Retorna null se inválido. */
 export function parseHHMM(value: string | null | undefined): number | null {
   if (!value) return null
@@ -20,13 +29,29 @@ export function formatMinutes(totalMinutes: number, withSign = false): string {
   return `${sign}${h}h ${String(m).padStart(2, "0")}min`
 }
 
-/** Formata um Date em "HH:MM" no fuso local do servidor/preview. */
+/** Formata um Date em "HH:MM" sempre no fuso de Brasília. */
 export function formatTime(date: Date | string | null | undefined): string {
   if (!date) return "--:--"
   const d = typeof date === "string" ? new Date(date) : date
   return d.toLocaleTimeString("pt-BR", {
     hour: "2-digit",
     minute: "2-digit",
+    timeZone: TIMEZONE,
+  })
+}
+
+/**
+ * Formata um Date como "HH:MM" (fuso de Brasília) para uso em <input type="time">.
+ * Retorna "" quando não há valor. Evita divergência de hidratação, pois não
+ * depende do fuso do runtime (servidor vs. navegador).
+ */
+export function toTimeInputValue(date: Date | string | null | undefined): string {
+  if (!date) return ""
+  const d = typeof date === "string" ? new Date(date) : date
+  return d.toLocaleTimeString("en-GB", {
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZone: TIMEZONE,
   })
 }
 
@@ -45,17 +70,55 @@ export interface DayCalculation {
   complete: boolean // registro completo (entrada + saída)
 }
 
+/** Retorna true se a data YYYY-MM-DD cai em um sábado. */
+export function isSaturdayISO(iso: string): boolean {
+  const [y, m, d] = iso.split("-").map(Number)
+  // Meio-dia UTC evita virar o dia por causa do fuso.
+  return new Date(Date.UTC(y, m - 1, d, 12)).getUTCDay() === 6
+}
+
+export interface DaySchedule {
+  entry: string | null
+  lunchStart: string | null
+  lunchEnd: string | null
+  exit: string | null
+}
+
+/**
+ * Jornada aplicável a um dia. Aos sábados usa a jornada de sábado quando
+ * cadastrada; caso contrário, cai para a jornada padrão (seg-sex).
+ */
+export function scheduleForDay(member: Staff, workDate?: string): DaySchedule {
+  const isSat = workDate ? isSaturdayISO(workDate) : false
+  if (isSat && member.satEntryTime && member.satExitTime) {
+    return {
+      entry: member.satEntryTime,
+      lunchStart: member.satLunchStart,
+      lunchEnd: member.satLunchEnd,
+      exit: member.satExitTime,
+    }
+  }
+  return {
+    entry: member.entryTime,
+    lunchStart: member.lunchStart,
+    lunchEnd: member.lunchEnd,
+    exit: member.exitTime,
+  }
+}
+
 /**
  * Jornada cadastrada em minutos, descontando o almoço previsto.
- * Ex.: 08:00 -> 18:00 com almoço 12:00-13:00 = 9h.
+ * Ex.: 09:00 -> 18:00 com almoço 12:00-13:00 = 8h.
+ * Passe workDate para aplicar a jornada de sábado quando for o caso.
  */
-export function scheduledMinutesForStaff(member: Staff): number {
-  const entry = parseHHMM(member.entryTime)
-  const exit = parseHHMM(member.exitTime)
+export function scheduledMinutesForStaff(member: Staff, workDate?: string): number {
+  const sched = scheduleForDay(member, workDate)
+  const entry = parseHHMM(sched.entry)
+  const exit = parseHHMM(sched.exit)
   if (entry === null || exit === null) return 0
   let total = exit - entry
-  const ls = parseHHMM(member.lunchStart)
-  const le = parseHHMM(member.lunchEnd)
+  const ls = parseHHMM(sched.lunchStart)
+  const le = parseHHMM(sched.lunchEnd)
   if (ls !== null && le !== null && le > ls) {
     total -= le - ls
   }
@@ -81,7 +144,7 @@ export function calculateDay(entry: TimeEntry, member: Staff): DayCalculation {
   const grossMinutes = Math.max(0, diffMinutes(clockIn, clockOut))
   const workedMinutes = Math.max(0, grossMinutes - lunchMinutes)
 
-  const scheduledMinutes = scheduledMinutesForStaff(member)
+  const scheduledMinutes = scheduledMinutesForStaff(member, entry.workDate)
   const complete = Boolean(clockIn && clockOut)
 
   const balanceMinutes = complete ? workedMinutes - scheduledMinutes : 0
@@ -131,13 +194,29 @@ export function aggregateDays(
   }
 }
 
-/** Data de hoje em formato YYYY-MM-DD (fuso local). */
+/** Data de hoje em formato YYYY-MM-DD, no fuso de Maricá/Rio de Janeiro. */
 export function todayISO(): string {
-  const now = new Date()
-  const y = now.getFullYear()
-  const m = String(now.getMonth() + 1).padStart(2, "0")
-  const d = String(now.getDate()).padStart(2, "0")
-  return `${y}-${m}-${d}`
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: TIMEZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date())
+}
+
+/** Primeiro dia do mês corrente no fuso de Maricá/Rio de Janeiro. */
+export function currentMonthStartISO(): string {
+  const today = todayISO()
+  return `${today.slice(0, 7)}-01`
+}
+
+/** Data/hora atual formatada para emissão de relatórios. */
+export function nowBR(): string {
+  return new Intl.DateTimeFormat("pt-BR", {
+    timeZone: TIMEZONE,
+    dateStyle: "short",
+    timeStyle: "short",
+  }).format(new Date())
 }
 
 /** Formata YYYY-MM-DD em "dd/mm/aaaa". */

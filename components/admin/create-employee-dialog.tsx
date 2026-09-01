@@ -85,13 +85,13 @@ export function CreateEmployeeDialog() {
 
             <div className="grid grid-cols-2 gap-3 rounded-lg border bg-muted/40 p-3">
               <p className="col-span-2 text-xs font-medium text-muted-foreground">
-                Jornada de trabalho
+                Jornada de segunda a sexta
               </p>
               <div className="grid gap-1.5">
                 <Label htmlFor="entryTime" className="text-xs">
                   Entrada
                 </Label>
-                <Input id="entryTime" name="entryTime" type="time" defaultValue="08:00" />
+                <Input id="entryTime" name="entryTime" type="time" defaultValue="09:00" />
               </div>
               <div className="grid gap-1.5">
                 <Label htmlFor="exitTime" className="text-xs">
@@ -110,6 +110,36 @@ export function CreateEmployeeDialog() {
                   Fim do almoço
                 </Label>
                 <Input id="lunchEnd" name="lunchEnd" type="time" defaultValue="13:00" />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 rounded-lg border bg-muted/40 p-3">
+              <p className="col-span-2 text-xs font-medium text-muted-foreground">
+                Jornada de sábado
+              </p>
+              <div className="grid gap-1.5">
+                <Label htmlFor="satEntryTime" className="text-xs">
+                  Entrada
+                </Label>
+                <Input id="satEntryTime" name="satEntryTime" type="time" defaultValue="09:00" />
+              </div>
+              <div className="grid gap-1.5">
+                <Label htmlFor="satExitTime" className="text-xs">
+                  Saída
+                </Label>
+                <Input id="satExitTime" name="satExitTime" type="time" defaultValue="16:00" />
+              </div>
+              <div className="grid gap-1.5">
+                <Label htmlFor="satLunchStart" className="text-xs">
+                  Início do almoço
+                </Label>
+                <Input id="satLunchStart" name="satLunchStart" type="time" defaultValue="12:00" />
+              </div>
+              <div className="grid gap-1.5">
+                <Label htmlFor="satLunchEnd" className="text-xs">
+                  Fim do almoço
+                </Label>
+                <Input id="satLunchEnd" name="satLunchEnd" type="time" defaultValue="13:00" />
               </div>
             </div>
           </div>

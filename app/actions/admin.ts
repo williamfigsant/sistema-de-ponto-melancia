@@ -4,7 +4,7 @@ import { auth } from "@/lib/auth"
 import { db } from "@/lib/db"
 import { staff, timeEntries } from "@/lib/db/schema"
 import { requireAdmin } from "@/lib/session"
-import { parseHHMM } from "@/lib/time-utils"
+import { parseHHMM, TZ_OFFSET } from "@/lib/time-utils"
 import { and, eq } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
 import { cookies } from "next/headers"
@@ -24,6 +24,10 @@ export async function createEmployee(formData: FormData) {
   const lunchStart = String(formData.get("lunchStart") ?? "").trim() || null
   const lunchEnd = String(formData.get("lunchEnd") ?? "").trim() || null
   const exitTime = String(formData.get("exitTime") ?? "").trim() || null
+  const satEntryTime = String(formData.get("satEntryTime") ?? "").trim() || null
+  const satLunchStart = String(formData.get("satLunchStart") ?? "").trim() || null
+  const satLunchEnd = String(formData.get("satLunchEnd") ?? "").trim() || null
+  const satExitTime = String(formData.get("satExitTime") ?? "").trim() || null
 
   if (!name || !email || password.length < 8) {
     return { error: "Preencha nome, e-mail e uma senha de ao menos 8 caracteres." }
@@ -33,6 +37,10 @@ export async function createEmployee(formData: FormData) {
     ["início do almoço", lunchStart],
     ["fim do almoço", lunchEnd],
     ["saída", exitTime],
+    ["entrada (sábado)", satEntryTime],
+    ["início do almoço (sábado)", satLunchStart],
+    ["fim do almoço (sábado)", satLunchEnd],
+    ["saída (sábado)", satExitTime],
   ] as const) {
     if (v && parseHHMM(v) === null) {
       return { error: `Horário de ${label} inválido. Use o formato HH:MM.` }
@@ -56,8 +64,7 @@ export async function createEmployee(formData: FormData) {
       body: { name, email, password },
     })
     userId = result.user.id
-  } catch (err) {
-    console.log("[v0] createEmployee signUp error:", err)
+  } catch {
     return { error: "Não foi possível criar a conta. O e-mail já pode estar em uso." }
   }
 
@@ -81,6 +88,10 @@ export async function createEmployee(formData: FormData) {
     lunchStart,
     lunchEnd,
     exitTime,
+    satEntryTime,
+    satLunchStart,
+    satLunchEnd,
+    satExitTime,
   })
 
   revalidatePath("/admin")
@@ -99,10 +110,23 @@ export async function updateEmployee(formData: FormData) {
   const lunchStart = String(formData.get("lunchStart") ?? "").trim() || null
   const lunchEnd = String(formData.get("lunchEnd") ?? "").trim() || null
   const exitTime = String(formData.get("exitTime") ?? "").trim() || null
+  const satEntryTime = String(formData.get("satEntryTime") ?? "").trim() || null
+  const satLunchStart = String(formData.get("satLunchStart") ?? "").trim() || null
+  const satLunchEnd = String(formData.get("satLunchEnd") ?? "").trim() || null
+  const satExitTime = String(formData.get("satExitTime") ?? "").trim() || null
   const active = formData.get("active") === "on" || formData.get("active") === "true"
 
   if (!staffId || !name) return { error: "Dados inválidos." }
-  for (const v of [entryTime, lunchStart, lunchEnd, exitTime]) {
+  for (const v of [
+    entryTime,
+    lunchStart,
+    lunchEnd,
+    exitTime,
+    satEntryTime,
+    satLunchStart,
+    satLunchEnd,
+    satExitTime,
+  ]) {
     if (v && parseHHMM(v) === null) {
       return { error: "Horário inválido. Use o formato HH:MM." }
     }
@@ -110,7 +134,18 @@ export async function updateEmployee(formData: FormData) {
 
   await db
     .update(staff)
-    .set({ name, entryTime, lunchStart, lunchEnd, exitTime, active })
+    .set({
+      name,
+      entryTime,
+      lunchStart,
+      lunchEnd,
+      exitTime,
+      satEntryTime,
+      satLunchStart,
+      satLunchEnd,
+      satExitTime,
+      active,
+    })
     .where(eq(staff.id, staffId))
 
   revalidatePath("/admin")
@@ -124,9 +159,11 @@ function combineDateTime(workDate: string, hhmm: string | null): Date | null {
   if (!hhmm) return null
   const minutes = parseHHMM(hhmm)
   if (minutes === null) return null
-  const [y, m, d] = workDate.split("-").map(Number)
-  const date = new Date(y, m - 1, d, Math.floor(minutes / 60), minutes % 60, 0, 0)
-  return date
+  const h = String(Math.floor(minutes / 60)).padStart(2, "0")
+  const mm = String(minutes % 60).padStart(2, "0")
+  // Interpreta o horário digitado como horário de Brasília (fixo -03:00),
+  // independentemente do fuso do servidor (que roda em UTC).
+  return new Date(`${workDate}T${h}:${mm}:00${TZ_OFFSET}`)
 }
 
 export async function updateTimeEntry(formData: FormData) {

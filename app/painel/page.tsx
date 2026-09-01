@@ -33,6 +33,8 @@ export default async function PainelPage() {
 
   const totals = aggregateDays(entries, profile)
   const scheduled = scheduledMinutesForStaff(profile)
+  // "2024-01-06" é um sábado — usado só para calcular a carga de sábado.
+  const scheduledSaturday = scheduledMinutesForStaff(profile, "2024-01-06")
 
   return (
     <div className="min-h-screen bg-secondary/30">
@@ -44,10 +46,16 @@ export default async function PainelPage() {
             Olá, {profile.name.split(" ")[0]}
           </h1>
           <p className="text-sm text-muted-foreground">
-            Jornada cadastrada: {profile.entryTime ?? "--:--"} às{" "}
+            Seg a sex: {profile.entryTime ?? "--:--"} às{" "}
             {profile.exitTime ?? "--:--"}
             {scheduled > 0 && ` (${formatMinutes(scheduled)}/dia)`}
           </p>
+          {profile.satEntryTime && profile.satExitTime && (
+            <p className="text-sm text-muted-foreground">
+              Sábado: {profile.satEntryTime} às {profile.satExitTime}
+              {scheduledSaturday > 0 && ` (${formatMinutes(scheduledSaturday)}/dia)`}
+            </p>
+          )}
         </div>
 
         <PunchClock entry={todayEntry} />
