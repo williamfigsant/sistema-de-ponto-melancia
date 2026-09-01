@@ -24,7 +24,6 @@
   th:last-child, td:last-child { width: 9%; }
   thead { display: table-header-group; }
   tr { break-inside: avoid; }
-  .print\\:grid { padding-top: 28mm !important; }
 }
 
 @custom-variant dark (&:is(.dark *));
