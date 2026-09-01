@@ -11,25 +11,37 @@ function resolveBaseURL() {
 }
 
 function resolveTrustedOrigins() {
-  const origins: string[] = []
+  const origins = new Set<string>()
+  const addOrigin = (value?: string) => {
+    if (!value) return
+    const normalized = value.startsWith("http") ? value : `https://${value}`
+    origins.add(normalized.replace(/\/$/, ""))
+  }
+
   if (process.env.NODE_ENV === "development") {
-    origins.push("http://localhost:3000")
+    addOrigin("http://localhost:3000")
     for (const key of [
       "V0_RUNTIME_URL",
       "V0_DEV_APP_URL",
       "V0_BUILD_URL",
       "V0_SANDBOX_URL",
+      "BETTER_AUTH_URL",
     ]) {
-      const value = process.env[key]
-      if (value) origins.push(value)
+      addOrigin(process.env[key])
     }
   } else {
-    for (const key of ["VERCEL_URL", "VERCEL_PROJECT_PRODUCTION_URL"]) {
-      const value = process.env[key]
-      if (value) origins.push(`https://${value}`)
+    for (const key of [
+      "VERCEL_URL",
+      "VERCEL_PROJECT_PRODUCTION_URL",
+      "BETTER_AUTH_URL",
+    ]) {
+      addOrigin(process.env[key])
     }
+    // Domínio de produção usado pelo sistema após a troca da URL na Vercel.
+    addOrigin("v0-app-pontomelancia.vercel.app")
   }
-  return origins
+
+  return Array.from(origins)
 }
 
 export const auth = betterAuth({
