@@ -16,7 +16,10 @@ import { getEntriesForUser, getStaffByUserId } from "@/lib/queries"
 import { requireAdmin } from "@/lib/session"
 import {
   aggregateDays,
+  currentMonthStartISO,
+  formatDateBR,
   formatMinutes,
+  nowBR,
   scheduledMinutesForStaff,
 } from "@/lib/time-utils"
 import { ArrowLeft } from "lucide-react"
@@ -35,9 +38,7 @@ export default async function ColaboradorPage({
   if (!member) notFound()
 
   // Registros do mês corrente.
-  const since = new Date()
-  since.setDate(1)
-  const sinceISO = since.toISOString().slice(0, 10)
+  const sinceISO = currentMonthStartISO()
 
   const entries = await getEntriesForUser(member.userId, sinceISO)
   const totals = aggregateDays(entries, member)
@@ -50,18 +51,18 @@ export default async function ColaboradorPage({
       <AppHeader userName={admin.name} roleLabel="Administrador" />
 
       <main className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-4 py-6">
-        <div className="hidden print:flex print:items-center print:justify-between print:border-b print:pb-4">
+        <div className="hidden print:flex print:items-center print:justify-between print:border-b print:border-foreground/20 print:pb-3">
           <div className="flex items-center gap-3">
-            <img src="/melancia-logo.png" alt="Melancia Foto e Presentes" className="size-16 object-cover" />
+            <img src="/melancia-logo.png" alt="Melancia Foto e Presentes" className="size-12 object-cover" />
             <div>
-              <p className="text-xl font-bold">Melancia Foto e Presentes</p>
-              <p className="text-sm">Relatório mensal de folha de ponto</p>
+              <p className="text-lg font-bold">Melancia Foto e Presentes</p>
+              <p className="text-xs text-muted-foreground">Relatório mensal de folha de ponto</p>
             </div>
           </div>
-          <div className="text-right text-sm">
-            <p className="font-semibold">Colaborador</p>
-            <p>{member.name}</p>
-            <p>Emitido em {new Date().toLocaleDateString("pt-BR")}</p>
+          <div className="text-right text-xs leading-5">
+            <p><span className="font-semibold">Colaborador:</span> {member.name}</p>
+            <p><span className="font-semibold">Referência:</span> {formatDateBR(sinceISO).slice(3)}</p>
+            <p><span className="font-semibold">Emitido em:</span> {nowBR()}</p>
           </div>
         </div>
 

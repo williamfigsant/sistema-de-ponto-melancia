@@ -60,14 +60,11 @@ export async function createEmployee(formData: FormData) {
   // Cria o usuário via Better Auth (hash de senha gerenciado pela lib).
   let userId: string
   try {
-    console.log("[v0] createEmployee: chamando signUpEmail para", email)
     const result = await auth.api.signUpEmail({
       body: { name, email, password },
     })
-    console.log("[v0] createEmployee: signUpEmail OK, userId =", result?.user?.id)
     userId = result.user.id
-  } catch (err) {
-    console.log("[v0] createEmployee signUp error:", err instanceof Error ? err.message : err)
+  } catch {
     return { error: "Não foi possível criar a conta. O e-mail já pode estar em uso." }
   }
 

@@ -194,10 +194,29 @@ export function aggregateDays(
   }
 }
 
-/** Data de hoje em formato YYYY-MM-DD, no fuso de Brasília. */
+/** Data de hoje em formato YYYY-MM-DD, no fuso de Maricá/Rio de Janeiro. */
 export function todayISO(): string {
-  // en-CA formata como YYYY-MM-DD; timeZone garante a data correta no Brasil.
-  return new Date().toLocaleDateString("en-CA", { timeZone: TIMEZONE })
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: TIMEZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date())
+}
+
+/** Primeiro dia do mês corrente no fuso de Maricá/Rio de Janeiro. */
+export function currentMonthStartISO(): string {
+  const today = todayISO()
+  return `${today.slice(0, 7)}-01`
+}
+
+/** Data/hora atual formatada para emissão de relatórios. */
+export function nowBR(): string {
+  return new Intl.DateTimeFormat("pt-BR", {
+    timeZone: TIMEZONE,
+    dateStyle: "short",
+    timeStyle: "short",
+  }).format(new Date())
 }
 
 /** Formata YYYY-MM-DD em "dd/mm/aaaa". */

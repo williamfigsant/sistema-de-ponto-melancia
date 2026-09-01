@@ -3,15 +3,28 @@
 @import 'shadcn/tailwind.css';
 
 @media print {
-  @page { size: A4 portrait; margin: 12mm; }
-  body { background: white !important; color: black !important; }
+  @page { size: A4 portrait; margin: 10mm 12mm; }
+  html, body { background: white !important; color: black !important; }
+  body { font-family: Arial, sans-serif !important; font-size: 9pt; }
   .print-hidden { display: none !important; }
-  table { width: 100%; border-collapse: collapse; font-size: 10pt; }
-  th, td { border: 1px solid #999 !important; padding: 6px 8px !important; color: black !important; }
+  main { max-width: none !important; gap: 12px !important; padding: 0 !important; }
+  [data-slot="card"] { border: 0 !important; box-shadow: none !important; background: white !important; }
+  [data-slot="card-header"] { padding: 10px 0 6px !important; }
+  [data-slot="card-content"] { padding: 0 !important; }
+  [data-slot="card-title"] { font-size: 12pt !important; }
+  [data-slot="card-description"] { font-size: 8.5pt !important; line-height: 1.35 !important; }
+  table { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 8.5pt; }
+  th, td { border: 1px solid #777 !important; padding: 5px 6px !important; color: black !important; white-space: nowrap; }
+  th:nth-child(1), td:nth-child(1) { width: 15%; }
+  th:nth-child(2), td:nth-child(2) { width: 12%; }
+  th:nth-child(3), td:nth-child(3) { width: 22%; }
+  th:nth-child(4), td:nth-child(4) { width: 12%; }
+  th:nth-child(5), td:nth-child(5) { width: 15%; }
+  th:nth-child(6), td:nth-child(6) { width: 15%; }
+  th:last-child, td:last-child { width: 9%; }
   thead { display: table-header-group; }
   tr { break-inside: avoid; }
-  [data-slot="card"] { border: 0 !important; box-shadow: none !important; }
-  main { max-width: none !important; padding: 0 !important; }
+  .print\\:grid { padding-top: 28mm !important; }
 }
 
 @custom-variant dark (&:is(.dark *));
