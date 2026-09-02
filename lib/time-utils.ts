@@ -160,8 +160,9 @@ export function calculateDay(entry: TimeEntry, member: Staff): DayCalculation {
   const occurrence = entry.occurrenceType ?? "normal"
   const complete = Boolean(clockIn && clockOut) || occurrence !== "normal"
   const absenceMinutes = occurrence === "unjustified_absence" || occurrence === "compensatory_day_off" ? scheduledMinutes : 0
+  const creditedMinutes = occurrence === "medical_certificate" ? Math.min(scheduledMinutes, Number(entry.occurrenceNote?.match(/([0-9]+)\s*h/i)?.[1] ?? 0) * 60) : 0
   const earlyDepartureMinutes = occurrence === "early_departure" ? Math.max(0, scheduledMinutes - workedMinutes) : 0
-  const balanceMinutes = complete ? workedMinutes - scheduledMinutes - earlyDepartureMinutes : -absenceMinutes
+  const balanceMinutes = complete ? workedMinutes + creditedMinutes - scheduledMinutes - earlyDepartureMinutes : -absenceMinutes
 
   return {
     workedMinutes,

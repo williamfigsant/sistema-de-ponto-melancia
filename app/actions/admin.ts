@@ -152,6 +152,21 @@ export async function updateEmployee(formData: FormData) {
   return { success: true }
 }
 
+export async function updateStoreSettings(formData: FormData) {
+  await requireAdmin()
+  const values = {
+    companyCnpj: String(formData.get("companyCnpj") ?? "").trim() || null,
+    companyCep: String(formData.get("companyCep") ?? "").trim() || null,
+    companyAddress: String(formData.get("companyAddress") ?? "").trim() || null,
+    companyCity: String(formData.get("companyCity") ?? "Maricá").trim() || "Maricá",
+    companyState: String(formData.get("companyState") ?? "RJ").trim().toUpperCase() || "RJ",
+  }
+  await db.update(staff).set(values)
+  revalidatePath("/admin")
+  revalidatePath("/admin/colaborador/[userId]", "page")
+  return { success: true }
+}
+
 // ---------------------------------------------------------------------------
 // Editar registro de ponto (SOMENTE admin)
 // ---------------------------------------------------------------------------

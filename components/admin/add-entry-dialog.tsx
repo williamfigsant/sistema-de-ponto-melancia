@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import type { Staff } from "@/lib/db/schema"
 import { todayISO } from "@/lib/time-utils"
 import { CalendarPlus } from "lucide-react"
@@ -75,7 +76,6 @@ export function AddEntryDialog({ member }: { member: Staff }) {
                 type="date"
                 required
                 defaultValue={todayISO()}
-                max={todayISO()}
               />
             </div>
 
@@ -125,6 +125,14 @@ export function AddEntryDialog({ member }: { member: Staff }) {
                 />
               </div>
             </div>
+          </div>
+
+          <div className="grid gap-2 pb-4">
+            <Label htmlFor="occurrenceType">Tipo de registro</Label>
+            <Select name="occurrenceType" defaultValue="normal"><SelectTrigger id="occurrenceType"><SelectValue /></SelectTrigger><SelectContent>
+              <SelectItem value="normal">Registro normal</SelectItem><SelectItem value="justified_absence">Falta justificada</SelectItem><SelectItem value="unjustified_absence">Falta injustificada</SelectItem><SelectItem value="medical_certificate">Atestado / comparecimento médico</SelectItem><SelectItem value="compensatory_day_off">Folga compensatória</SelectItem><SelectItem value="early_departure">Saída antecipada</SelectItem><SelectItem value="compensatory_early_departure">Saída antecipada compensatória</SelectItem>
+            </SelectContent></Select>
+            <Label htmlFor="occurrenceNote">Observação / horas abonadas</Label><Input id="occurrenceNote" name="occurrenceNote" placeholder="Ex.: comparecimento médico — 2h abonadas" />
           </div>
 
           <DialogFooter>
