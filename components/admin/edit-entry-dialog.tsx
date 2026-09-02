@@ -16,7 +16,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import type { TimeEntry } from "@/lib/db/schema"
-import { formatDateBR, toTimeInputValue } from "@/lib/time-utils"
+import { toTimeInputValue } from "@/lib/time-utils"
 import { useRouter } from "next/navigation"
 import { useTransition } from "react"
 import { toast } from "sonner"
@@ -41,7 +41,6 @@ export function EditEntryDialog({
     e.preventDefault()
     const form = new FormData(e.currentTarget)
     form.set("employeeUserId", employeeUserId)
-    form.set("workDate", workDate)
     startTransition(async () => {
       const result = await updateTimeEntry(form)
       if (result.error) {
@@ -56,14 +55,15 @@ export function EditEntryDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-sm">
+      <DialogContent className="w-[calc(100%-2rem)] max-w-2xl max-h-[90vh] overflow-y-auto">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
             <DialogTitle>Editar registro</DialogTitle>
-            <DialogDescription>{formatDateBR(workDate)}</DialogDescription>
+            <DialogDescription>Corrija a data, horários e ocorrência deste lançamento.</DialogDescription>
           </DialogHeader>
 
-          <div className="grid grid-cols-2 gap-3 py-4">
+          <div className="grid gap-1.5 py-4"><Label htmlFor="editWorkDate">Data</Label><Input id="editWorkDate" name="workDate" type="date" defaultValue={workDate} required /></div>
+          <div className="grid grid-cols-2 gap-3 pb-4">
             <div className="grid gap-1.5">
               <Label htmlFor="clockIn" className="text-xs">
                 Entrada
@@ -112,7 +112,7 @@ export function EditEntryDialog({
 
           <div className="grid gap-1.5 pb-4">
             <Label htmlFor="occurrenceType">Ocorrência do dia</Label>
-            <Select name="occurrenceType" defaultValue={entry?.occurrenceType ?? "normal"}>
+            <Select name="occurrenceType" defaultValue={entry?.occurrenceType ?? "normal"} itemToStringLabel={(value) => ({ normal: "Normal", justified_absence: "Falta justificada", unjustified_absence: "Falta injustificada", medical_certificate: "Atestado", compensatory_day_off: "Folga compensatória", early_departure: "Saída antecipada", compensatory_early_departure: "Saída antecipada compensatória" }[String(value)] ?? "Normal")}>
               <SelectTrigger id="occurrenceType"><SelectValue placeholder="Selecione" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="normal">Normal</SelectItem>
@@ -125,6 +125,8 @@ export function EditEntryDialog({
               </SelectContent>
             </Select>
           </div>
+
+          <div className="grid gap-1.5 pb-4"><Label htmlFor="editOccurrenceNote">Observação / horas abonadas</Label><Input id="editOccurrenceNote" name="occurrenceNote" defaultValue={entry?.occurrenceNote ?? ""} placeholder="Ex.: comparecimento médico — 2h abonadas" /></div>
 
           <DialogFooter>
             <Button type="submit" disabled={isPending} className="w-full">
