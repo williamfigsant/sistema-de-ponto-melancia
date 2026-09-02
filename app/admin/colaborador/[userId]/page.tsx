@@ -16,9 +16,11 @@ import { getEntriesForUser, getStaffByUserId } from "@/lib/queries"
 import { requireAdmin } from "@/lib/session"
 import {
   aggregateDays,
+  calculateDay,
   currentMonthStartISO,
   formatDateBR,
   formatMinutes,
+  formatTime,
   nowBR,
   scheduledMinutesForStaff,
 } from "@/lib/time-utils"
