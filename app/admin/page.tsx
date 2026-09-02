@@ -3,6 +3,7 @@ import { CreateEmployeeDialog } from "@/components/admin/create-employee-dialog"
 import { EmployeeList } from "@/components/admin/employee-list"
 import { AppHeader } from "@/components/app-header"
 import { SummaryCards } from "@/components/summary-cards"
+import { StoreSettingsCard } from "@/components/admin/store-settings-card"
 import {
   Card,
   CardContent,
@@ -66,6 +67,8 @@ export default async function AdminPage() {
             daysCompleted={daysCompleted}
           />
         </div>
+
+        <StoreSettingsCard values={allStaff[0]} />
 
         <Card>
           <CardHeader>
