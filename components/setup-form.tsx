@@ -81,6 +81,13 @@ export function SetupForm({ hasSession }: { hasSession: boolean }) {
           </div>
         </>
       )}
+      <div className="grid gap-2 border-t pt-4">
+        <p className="text-sm font-medium">Dados da loja</p>
+        <Input name="companyCnpj" placeholder="CNPJ" />
+        <Input name="companyCep" placeholder="CEP" />
+        <Input name="companyAddress" placeholder="Endereço completo" />
+        <div className="grid grid-cols-2 gap-2"><Input name="companyCity" defaultValue="Maricá" placeholder="Cidade" /><Input name="companyState" defaultValue="RJ" placeholder="UF" /></div>
+      </div>
       <Button type="submit" disabled={loading} className="mt-2 w-full">
         {loading ? "Configurando..." : "Criar administrador"}
       </Button>

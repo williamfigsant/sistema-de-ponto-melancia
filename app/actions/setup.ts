@@ -29,6 +29,11 @@ export async function createFirstAdmin(formData: FormData) {
     .trim()
     .toLowerCase()
   const password = String(formData.get("password") ?? "")
+  const companyCnpj = String(formData.get("companyCnpj") ?? "").trim() || null
+  const companyCep = String(formData.get("companyCep") ?? "").trim() || null
+  const companyAddress = String(formData.get("companyAddress") ?? "").trim() || null
+  const companyCity = String(formData.get("companyCity") ?? "Maricá").trim() || "Maricá"
+  const companyState = String(formData.get("companyState") ?? "RJ").trim() || "RJ"
 
   // Caso um usuário já esteja logado sem perfil, apenas cria o perfil admin.
   if (session?.user) {
@@ -36,6 +41,7 @@ export async function createFirstAdmin(formData: FormData) {
       userId: session.user.id,
       name: name || session.user.name || "Administrador",
       role: "admin",
+      companyCnpj, companyCep, companyAddress, companyCity, companyState,
     })
     return { success: true }
   }
@@ -53,6 +59,6 @@ export async function createFirstAdmin(formData: FormData) {
     return { error: "Não foi possível criar a conta. O e-mail já pode estar em uso." }
   }
 
-  await db.insert(staff).values({ userId, name, role: "admin" })
+  await db.insert(staff).values({ userId, name, role: "admin", companyCnpj, companyCep, companyAddress, companyCity, companyState })
   return { success: true }
 }
