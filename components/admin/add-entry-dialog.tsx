@@ -55,7 +55,7 @@ export function AddEntryDialog({ member }: { member: Staff }) {
         <CalendarPlus className="size-4" />
         Lançar registro
       </DialogTrigger>
-      <DialogContent className="sm:max-w-sm">
+      <DialogContent className="w-[calc(100%-2rem)] max-w-2xl max-h-[90vh] overflow-y-auto">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
             <DialogTitle>Lançar registro</DialogTitle>
@@ -129,7 +129,7 @@ export function AddEntryDialog({ member }: { member: Staff }) {
 
           <div className="grid gap-2 pb-4">
             <Label htmlFor="occurrenceType">Tipo de registro</Label>
-            <Select name="occurrenceType" defaultValue="normal"><SelectTrigger id="occurrenceType"><SelectValue /></SelectTrigger><SelectContent>
+            <Select name="occurrenceType" defaultValue="normal" itemToStringLabel={(value) => ({ normal: "Registro normal", justified_absence: "Falta justificada", unjustified_absence: "Falta injustificada", medical_certificate: "Atestado / comparecimento médico", compensatory_day_off: "Folga compensatória", early_departure: "Saída antecipada", compensatory_early_departure: "Saída antecipada compensatória" }[String(value)] ?? "Registro normal")}><SelectTrigger id="occurrenceType"><SelectValue /></SelectTrigger><SelectContent>
               <SelectItem value="normal">Registro normal</SelectItem><SelectItem value="justified_absence">Falta justificada</SelectItem><SelectItem value="unjustified_absence">Falta injustificada</SelectItem><SelectItem value="medical_certificate">Atestado / comparecimento médico</SelectItem><SelectItem value="compensatory_day_off">Folga compensatória</SelectItem><SelectItem value="early_departure">Saída antecipada</SelectItem><SelectItem value="compensatory_early_departure">Saída antecipada compensatória</SelectItem>
             </SelectContent></Select>
             <Label htmlFor="occurrenceNote">Observação / horas abonadas</Label><Input id="occurrenceNote" name="occurrenceNote" placeholder="Ex.: comparecimento médico — 2h abonadas" />

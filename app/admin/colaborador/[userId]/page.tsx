@@ -1,5 +1,6 @@
 import { AddEntryDialog } from "@/components/admin/add-entry-dialog"
 import { AdminHistoryTable } from "@/components/admin/admin-history-table"
+import { MonthCalendar } from "@/components/admin/month-calendar"
 import { PrintReportButton } from "@/components/admin/print-report-button"
 import { AppHeader } from "@/components/app-header"
 import { SummaryCards } from "@/components/summary-cards"
@@ -22,7 +23,6 @@ import {
   formatMinutes,
   formatTime,
   nowBR,
-  occurrenceLabels,
   scheduledMinutesForStaff,
 } from "@/lib/time-utils"
 import { ArrowLeft } from "lucide-react"
@@ -56,6 +56,7 @@ export default async function ColaboradorPage({
   }).format(new Date(Date.UTC(year, month - 1, 1, 12)))
   const daysInMonth = new Date(Date.UTC(year, month, 0)).getUTCDate()
   const entriesByDate = new Map(entries.map((entry) => [entry.workDate, entry]))
+  const occurrenceCodes: Record<string, string> = { justified_absence: "FJ", unjustified_absence: "FI", medical_certificate: "AT", compensatory_day_off: "FC", early_departure: "SA", compensatory_early_departure: "SAC" }
 
   return (
     <div className="min-h-screen bg-secondary/30">
@@ -85,11 +86,11 @@ export default async function ColaboradorPage({
               const date = `${sinceISO.slice(0, 7)}-${String(day).padStart(2, "0")}`
               const entry = entriesByDate.get(date)
               const calc = entry ? calculateDay(entry, member) : null
-              return <tr key={date}><td>{String(day).padStart(2, "0")}</td><td>{formatTime(entry?.clockIn)}</td><td>{formatTime(entry?.lunchStart)}</td><td>{formatTime(entry?.lunchEnd)}</td><td>{formatTime(entry?.clockOut)}</td><td>{entry ? occurrenceLabels[entry.occurrenceType as keyof typeof occurrenceLabels] : ""}</td><td>{calc?.complete && calc.balanceMinutes > 0 ? formatMinutes(calc.balanceMinutes) : calc?.balanceMinutes < 0 ? `-${formatMinutes(Math.abs(calc.balanceMinutes))}` : ""}</td><td></td></tr>
+              return <tr key={date}><td>{String(day).padStart(2, "0")}</td><td>{formatTime(entry?.clockIn)}</td><td>{formatTime(entry?.lunchStart)}</td><td>{formatTime(entry?.lunchEnd)}</td><td>{formatTime(entry?.clockOut)}</td><td>{entry ? occurrenceCodes[entry.occurrenceType] ?? "" : ""}</td><td>{calc?.complete && (calc.balanceMinutes ?? 0) > 0 ? formatMinutes(calc.balanceMinutes ?? 0) : calc && (calc.balanceMinutes ?? 0) < 0 ? `-${formatMinutes(Math.abs(calc.balanceMinutes ?? 0))}` : ""}</td><td></td></tr>
             })}</tbody>
           </table>
           <div className="print-sheet-signature"><b>Assinatura do empregado:</b><span /></div>
-          <div className="print-sheet-footer">Documento emitido em {nowBR()} · Fuso horário: Maricá/RJ (America/Sao_Paulo)</div>
+          <div className="print-sheet-footer"><b>Legenda:</b> FJ = Falta justificada · FI = Falta injustificada · AT = Atestado · FC = Folga compensatória · SA = Saída antecipada · SAC = Saída antecipada compensatória<br />Documento emitido em {nowBR()} · Fuso horário: Maricá/RJ (America/Sao_Paulo)</div>
         </section>
         <div className="hidden print:flex print:items-center print:justify-between print:border-b print:border-foreground/20 print:pb-3">
           <div className="flex items-center gap-3">
@@ -160,6 +161,11 @@ export default async function ColaboradorPage({
             daysCompleted={totals.daysCompleted}
           />
         </div>
+
+        <Card className="print-hidden">
+          <CardHeader><CardTitle className="text-lg">Calendário de registros</CardTitle><CardDescription>Clique em um dia para lançar ou editar o registro.</CardDescription></CardHeader>
+          <CardContent><MonthCalendar entries={entries} member={member} year={year} month={month} /></CardContent>
+        </Card>
 
         <Card>
           <CardHeader>
