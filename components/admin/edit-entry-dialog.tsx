@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import type { TimeEntry } from "@/lib/db/schema"
 import { formatDateBR, toTimeInputValue } from "@/lib/time-utils"
 import { useRouter } from "next/navigation"
@@ -107,6 +108,22 @@ export function EditEntryDialog({
                 defaultValue={toTimeInputValue(entry?.lunchEnd ?? null)}
               />
             </div>
+          </div>
+
+          <div className="grid gap-1.5 pb-4">
+            <Label htmlFor="occurrenceType">Ocorrência do dia</Label>
+            <Select name="occurrenceType" defaultValue={entry?.occurrenceType ?? "normal"}>
+              <SelectTrigger id="occurrenceType"><SelectValue placeholder="Selecione" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="normal">Normal</SelectItem>
+                <SelectItem value="justified_absence">Falta justificada</SelectItem>
+                <SelectItem value="unjustified_absence">Falta injustificada</SelectItem>
+                <SelectItem value="medical_certificate">Atestado</SelectItem>
+                <SelectItem value="compensatory_day_off">Folga compensatória</SelectItem>
+                <SelectItem value="early_departure">Saída antecipada</SelectItem>
+                <SelectItem value="compensatory_early_departure">Saída antecipada compensatória</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           <DialogFooter>

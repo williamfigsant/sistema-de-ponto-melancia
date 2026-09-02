@@ -84,6 +84,11 @@ export const staff = pgTable("staff", {
   satLunchStart: text("satLunchStart"), // "12:00" (sáb)
   satLunchEnd: text("satLunchEnd"), // "13:00" (sáb)
   satExitTime: text("satExitTime"), // "16:00" (sáb)
+  companyCnpj: text("companyCnpj"),
+  companyCep: text("companyCep"),
+  companyAddress: text("companyAddress"),
+  companyCity: text("companyCity").default("Maricá"),
+  companyState: text("companyState").default("RJ"),
   active: boolean("active").notNull().default(true),
   createdAt: timestamp("createdAt").notNull().defaultNow(),
 })
@@ -100,6 +105,8 @@ export const timeEntries = pgTable(
     lunchEnd: timestamp("lunchEnd"),
     clockOut: timestamp("clockOut"),
     editedByAdmin: boolean("editedByAdmin").notNull().default(false),
+    occurrenceType: text("occurrenceType").notNull().default("normal"),
+    occurrenceNote: text("occurrenceNote"),
     createdAt: timestamp("createdAt").notNull().defaultNow(),
   },
   (t) => ({

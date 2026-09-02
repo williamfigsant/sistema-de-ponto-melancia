@@ -60,6 +60,18 @@ function diffMinutes(start: Date | null, end: Date | null): number {
   return (end.getTime() - start.getTime()) / 60000
 }
 
+export type OccurrenceType = "normal" | "justified_absence" | "unjustified_absence" | "medical_certificate" | "compensatory_day_off" | "early_departure" | "compensatory_early_departure"
+
+export const occurrenceLabels: Record<OccurrenceType, string> = {
+  normal: "",
+  justified_absence: "Falta justificada",
+  unjustified_absence: "Falta injustificada",
+  medical_certificate: "Atestado",
+  compensatory_day_off: "Folga compensatória",
+  early_departure: "Saída antecipada",
+  compensatory_early_departure: "Saída antecipada compensatória",
+}
+
 export interface DayCalculation {
   workedMinutes: number // minutos trabalhados (descontando almoço)
   lunchMinutes: number // minutos de almoço
@@ -145,9 +157,11 @@ export function calculateDay(entry: TimeEntry, member: Staff): DayCalculation {
   const workedMinutes = Math.max(0, grossMinutes - lunchMinutes)
 
   const scheduledMinutes = scheduledMinutesForStaff(member, entry.workDate)
-  const complete = Boolean(clockIn && clockOut)
-
-  const balanceMinutes = complete ? workedMinutes - scheduledMinutes : 0
+  const occurrence = entry.occurrenceType ?? "normal"
+  const complete = Boolean(clockIn && clockOut) || occurrence !== "normal"
+  const absenceMinutes = occurrence === "unjustified_absence" || occurrence === "compensatory_day_off" ? scheduledMinutes : 0
+  const earlyDepartureMinutes = occurrence === "early_departure" ? Math.max(0, scheduledMinutes - workedMinutes) : 0
+  const balanceMinutes = complete ? workedMinutes - scheduledMinutes - earlyDepartureMinutes : -absenceMinutes
 
   return {
     workedMinutes,

@@ -7,10 +7,12 @@
 @media print {
   @page { size: A4 portrait; margin: 10mm 12mm; }
   html, body { background: white !important; color: black !important; }
+  body > header, body > nav { display: none !important; }
   body { font-family: Arial, sans-serif !important; font-size: 9pt; }
   .print-hidden { display: none !important; }
   main { max-width: none !important; gap: 12px !important; padding: 0 !important; }
   main > *:not(.print-sheet) { display: none !important; }
+  .print-sheet + * { display: none !important; }
   .print-sheet { display: block !important; color: #111 !important; font-family: Arial, sans-serif; font-size: 8pt; }
   .print-sheet-title { margin: 0 0 5px; text-align: center; font-size: 13pt; font-weight: 800; }
   .print-sheet-section-title { border: 1px solid #555; background: #f1f1f1 !important; padding: 3px; text-align: center; font-size: 9pt; font-weight: 700; }

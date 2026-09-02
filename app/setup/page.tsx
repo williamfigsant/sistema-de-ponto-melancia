@@ -5,6 +5,8 @@ import { SetupForm } from "@/components/setup-form"
 import { getCurrentStaff, getSession } from "@/lib/session"
 import { redirect } from "next/navigation"
 
+export const dynamic = "force-dynamic"
+
 export default async function SetupPage() {
   // Se já existe admin, ninguém mais configura por aqui.
   if (await adminExists()) {

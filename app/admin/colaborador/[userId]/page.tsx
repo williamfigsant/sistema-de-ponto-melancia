@@ -22,6 +22,7 @@ import {
   formatMinutes,
   formatTime,
   nowBR,
+  occurrenceLabels,
   scheduledMinutesForStaff,
 } from "@/lib/time-utils"
 import { ArrowLeft } from "lucide-react"
@@ -66,9 +67,9 @@ export default async function ColaboradorPage({
           <div className="print-sheet-section-title">DADOS DO EMPREGADOR</div>
           <div className="print-sheet-grid print-sheet-employer">
             <div><b>Nome:</b> Melancia Foto e Presentes</div>
-            <div><b>CNPJ:</b> ______________________________</div>
-            <div className="wide"><b>Endereço:</b> _________________________________________________________________</div>
-            <div><b>Cidade:</b> Maricá</div><div><b>Estado:</b> RJ</div><div><b>CEP:</b> ____________</div>
+            <div><b>CNPJ:</b> {member.companyCnpj || "______________________________"}</div>
+            <div className="wide"><b>Endereço:</b> {member.companyAddress || "_______________________________________________________________"}</div>
+            <div><b>Cidade:</b> {member.companyCity || "Maricá"}</div><div><b>Estado:</b> {member.companyState || "RJ"}</div><div><b>CEP:</b> {member.companyCep || "____________"}</div>
           </div>
           <div className="print-sheet-section-title">DADOS DO EMPREGADO</div>
           <div className="print-sheet-grid print-sheet-employee">
@@ -84,7 +85,7 @@ export default async function ColaboradorPage({
               const date = `${sinceISO.slice(0, 7)}-${String(day).padStart(2, "0")}`
               const entry = entriesByDate.get(date)
               const calc = entry ? calculateDay(entry, member) : null
-              return <tr key={date}><td>{String(day).padStart(2, "0")}</td><td>{formatTime(entry?.clockIn)}</td><td>{formatTime(entry?.lunchStart)}</td><td>{formatTime(entry?.lunchEnd)}</td><td>{formatTime(entry?.clockOut)}</td><td></td><td>{calc?.complete && calc.balanceMinutes > 0 ? formatMinutes(calc.balanceMinutes) : ""}</td><td></td></tr>
+              return <tr key={date}><td>{String(day).padStart(2, "0")}</td><td>{formatTime(entry?.clockIn)}</td><td>{formatTime(entry?.lunchStart)}</td><td>{formatTime(entry?.lunchEnd)}</td><td>{formatTime(entry?.clockOut)}</td><td>{entry ? occurrenceLabels[entry.occurrenceType as keyof typeof occurrenceLabels] : ""}</td><td>{calc?.complete && calc.balanceMinutes > 0 ? formatMinutes(calc.balanceMinutes) : calc?.balanceMinutes < 0 ? `-${formatMinutes(Math.abs(calc.balanceMinutes))}` : ""}</td><td></td></tr>
             })}</tbody>
           </table>
           <div className="print-sheet-signature"><b>Assinatura do empregado:</b><span /></div>

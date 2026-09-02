@@ -175,8 +175,10 @@ export async function updateTimeEntry(formData: FormData) {
   const lunchStart = String(formData.get("lunchStart") ?? "").trim() || null
   const lunchEnd = String(formData.get("lunchEnd") ?? "").trim() || null
   const clockOut = String(formData.get("clockOut") ?? "").trim() || null
+  const occurrenceType = String(formData.get("occurrenceType") ?? "normal")
+  const allowedOccurrences = ["normal", "justified_absence", "unjustified_absence", "medical_certificate", "compensatory_day_off", "early_departure", "compensatory_early_departure"]
 
-  if (!employeeUserId || !workDate) return { error: "Dados inválidos." }
+  if (!employeeUserId || !workDate || !allowedOccurrences.includes(occurrenceType)) return { error: "Dados inválidos." }
   for (const v of [clockIn, lunchStart, lunchEnd, clockOut]) {
     if (v && parseHHMM(v) === null) {
       return { error: "Horário inválido. Use o formato HH:MM." }
@@ -189,6 +191,8 @@ export async function updateTimeEntry(formData: FormData) {
     lunchEnd: combineDateTime(workDate, lunchEnd),
     clockOut: combineDateTime(workDate, clockOut),
     editedByAdmin: true,
+    occurrenceType,
+    occurrenceNote: String(formData.get("occurrenceNote") ?? "").trim() || null,
   }
 
   const existing = await db
