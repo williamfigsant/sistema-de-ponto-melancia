@@ -60,10 +60,18 @@ function diffMinutes(start: Date | null, end: Date | null): number {
   return (end.getTime() - start.getTime()) / 60000
 }
 
-export type OccurrenceType = "normal" | "justified_absence" | "unjustified_absence" | "medical_certificate" | "compensatory_day_off" | "early_departure" | "compensatory_early_departure"
+/** Aplica a tolerância legal de até 5 min por marcação e 10 min no dia. */
+export function calcularToleranciaArt58(clockInMinutes: number, clockOutMinutes: number, scheduledInMinutes: number, scheduledOutMinutes: number): { entrada: number; saida: number; total: number } {
+  const entrada = Math.min(5, Math.abs(clockInMinutes - scheduledInMinutes))
+  const saida = Math.min(5, Math.abs(clockOutMinutes - scheduledOutMinutes))
+  return { entrada, saida, total: Math.min(10, entrada + saida) }
+}
+
+export type OccurrenceType = "normal" | "holiday" | "justified_absence" | "unjustified_absence" | "medical_certificate" | "compensatory_day_off" | "early_departure" | "compensatory_early_departure"
 
 export const occurrenceLabels: Record<OccurrenceType, string> = {
   normal: "",
+  holiday: "Feriado",
   justified_absence: "Falta justificada",
   unjustified_absence: "Falta injustificada",
   medical_certificate: "Atestado",
@@ -161,8 +169,14 @@ export function calculateDay(entry: TimeEntry, member: Staff): DayCalculation {
   const complete = Boolean(clockIn && clockOut) || occurrence !== "normal"
   const absenceMinutes = occurrence === "unjustified_absence" || occurrence === "compensatory_day_off" ? scheduledMinutes : 0
   const creditedMinutes = occurrence === "medical_certificate" ? Math.min(scheduledMinutes, Number(entry.occurrenceNote?.match(/([0-9]+)\s*h/i)?.[1] ?? 0) * 60) : 0
-  const earlyDepartureMinutes = occurrence === "early_departure" ? Math.max(0, scheduledMinutes - workedMinutes) : 0
-  const balanceMinutes = complete ? workedMinutes + creditedMinutes - scheduledMinutes - earlyDepartureMinutes : -absenceMinutes
+  const scheduled = scheduleForDay(member, entry.workDate)
+  const scheduledIn = parseHHMM(scheduled.entry)
+  const scheduledOut = parseHHMM(scheduled.exit)
+  const actualIn = clockIn ? Number(formatTime(clockIn).replace(":", "")) : 0
+  const actualOut = clockOut ? Number(formatTime(clockOut).replace(":", "")) : 0
+  const tolerance = scheduledIn !== null && scheduledOut !== null && clockIn && clockOut ? calcularToleranciaArt58(Math.floor(actualIn / 100) * 60 + actualIn % 100, Math.floor(actualOut / 100) * 60 + actualOut % 100, scheduledIn, scheduledOut).total : 0
+  const earlyDepartureMinutes = occurrence === "early_departure" || occurrence === "compensatory_early_departure" ? Math.max(0, scheduledMinutes - workedMinutes - tolerance) : 0
+  const balanceMinutes = occurrence === "holiday" ? 0 : complete ? workedMinutes + creditedMinutes - scheduledMinutes - earlyDepartureMinutes + tolerance : -absenceMinutes
 
   return {
     workedMinutes,

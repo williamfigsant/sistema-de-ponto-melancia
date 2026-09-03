@@ -112,10 +112,11 @@ export function EditEntryDialog({
 
           <div className="grid gap-1.5 pb-4">
             <Label htmlFor="occurrenceType">Ocorrência do dia</Label>
-            <Select name="occurrenceType" defaultValue={entry?.occurrenceType ?? "normal"} itemToStringLabel={(value) => ({ normal: "Normal", justified_absence: "Falta justificada", unjustified_absence: "Falta injustificada", medical_certificate: "Atestado", compensatory_day_off: "Folga compensatória", early_departure: "Saída antecipada", compensatory_early_departure: "Saída antecipada compensatória" }[String(value)] ?? "Normal")}>
+            <Select name="occurrenceType" defaultValue={entry?.occurrenceType ?? "normal"} itemToStringLabel={(value) => ({ normal: "Normal", holiday: "Feriado", justified_absence: "Falta justificada", unjustified_absence: "Falta injustificada", medical_certificate: "Atestado", compensatory_day_off: "Folga compensatória", early_departure: "Saída antecipada", compensatory_early_departure: "Saída antecipada compensatória" }[String(value)] ?? "Normal")}>
               <SelectTrigger id="occurrenceType"><SelectValue placeholder="Selecione" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="normal">Normal</SelectItem>
+                <SelectItem value="holiday">Feriado</SelectItem>
                 <SelectItem value="justified_absence">Falta justificada</SelectItem>
                 <SelectItem value="unjustified_absence">Falta injustificada</SelectItem>
                 <SelectItem value="medical_certificate">Atestado</SelectItem>

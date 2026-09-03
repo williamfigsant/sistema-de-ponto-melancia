@@ -62,7 +62,7 @@ export default async function ColaboradorPage({
   }).format(new Date(Date.UTC(year, month - 1, 1, 12)))
   const daysInMonth = new Date(Date.UTC(year, month, 0)).getUTCDate()
   const entriesByDate = new Map(entries.map((entry) => [entry.workDate, entry]))
-  const occurrenceCodes: Record<string, string> = { justified_absence: "FJ", unjustified_absence: "FI", medical_certificate: "AT", compensatory_day_off: "FC", early_departure: "SA", compensatory_early_departure: "SAC" }
+  const occurrenceCodes: Record<string, string> = { holiday: "FER", justified_absence: "FJ", unjustified_absence: "FI", medical_certificate: "AT", compensatory_day_off: "FC", early_departure: "SA", compensatory_early_departure: "SAC" }
 
   return (
     <div className="min-h-screen bg-secondary/30">
@@ -96,7 +96,7 @@ export default async function ColaboradorPage({
             })}</tbody>
           </table>
           <div className="print-sheet-signature"><b>Assinatura do empregado:</b><span /></div>
-          <div className="print-sheet-footer"><b>Legenda:</b> FJ = Falta justificada · FI = Falta injustificada · AT = Atestado · FC = Folga compensatória · SA = Saída antecipada · SAC = Saída antecipada compensatória<br />Documento emitido em {nowBR()} · Fuso horário: Maricá/RJ (America/Sao_Paulo)</div>
+          <div className="print-sheet-footer"><b>Legenda:</b> FER = Feriado · FJ = Falta justificada · FI = Falta injustificada · AT = Atestado · FC = Folga compensatória · SA = Saída antecipada · SAC = Saída antecipada compensatória<br />Documento emitido em {nowBR()} · Fuso horário: Maricá/RJ (America/Sao_Paulo)</div>
         </section>
         <div className="hidden print:flex print:items-center print:justify-between print:border-b print:border-foreground/20 print:pb-3">
           <div className="flex items-center gap-3">
@@ -179,7 +179,7 @@ export default async function ColaboradorPage({
 
         <Card className="print-hidden">
           <CardHeader><CardTitle className="text-lg">Manual do banco de horas</CardTitle><CardDescription>Como cada lançamento afeta o saldo do colaborador.</CardDescription></CardHeader>
-          <CardContent className="grid gap-2 text-sm text-muted-foreground md:grid-cols-2"><p><b className="text-foreground">Registro normal:</b> compara horas trabalhadas com a jornada prevista; excedente vira hora extra e falta vira débito.</p><p><b className="text-foreground">Falta justificada (FJ):</b> dia abonado, sem débito no banco.</p><p><b className="text-foreground">Atestado (AT):</b> horas informadas como abonadas são creditadas até o limite da jornada.</p><p><b className="text-foreground">Falta injustificada (FI):</b> desconta toda a jornada prevista do dia.</p><p><b className="text-foreground">Folga compensatória (FC):</b> desconta a jornada prevista, pois consome saldo previamente acumulado.</p><p><b className="text-foreground">Saída antecipada (SA):</b> desconta a diferença entre o trabalhado e a jornada prevista.</p><p><b className="text-foreground">Saída antecipada compensatória (SAC):</b> registra a ocorrência, mas não gera débito.</p></CardContent>
+          <CardContent className="grid gap-2 text-sm text-muted-foreground md:grid-cols-2"><p className="md:col-span-2"><b className="text-foreground">Tolerância do Art. 58, §1º da CLT:</b> até 5 minutos por marcação, limitada a 10 minutos no dia, é desconsiderada no banco de horas.</p><p><b className="text-foreground">Registro normal:</b> compara horas trabalhadas com a jornada prevista; excedente vira hora extra e falta vira débito.</p><p><b className="text-foreground">Falta justificada (FJ):</b> dia abonado, sem débito no banco.</p><p><b className="text-foreground">Atestado (AT):</b> horas informadas como abonadas são creditadas até o limite da jornada.</p><p><b className="text-foreground">Falta injustificada (FI):</b> desconta toda a jornada prevista do dia.</p><p><b className="text-foreground">Folga compensatória (FC):</b> desconta a jornada prevista, pois consome saldo previamente acumulado.</p><p><b className="text-foreground">Saída antecipada (SA):</b> desconta a diferença entre o trabalhado e a jornada prevista.</p><p><b className="text-foreground">Saída antecipada compensatória (SAC):</b> registra a ocorrência e gera débito pela diferença da saída antecipada.</p></CardContent>
         </Card>
 
         <Card>
