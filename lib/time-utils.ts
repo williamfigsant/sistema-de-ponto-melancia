@@ -84,8 +84,10 @@ export function calcularToleranciaArt58({
   const minutosComputaveis = Math.max(0, totalVariacoes - minutosTolerados)
   // A duração aumenta quando a entrada ocorre antes e/ou a saída depois.
   // Esses minutos devem ser retirados do saldo quando estiverem dentro da tolerância.
-  const variacaoDaDuracao = -((variacoesPorMarcacao.find((item) => item.nome === "Entrada")?.variacao ?? 0)) + (variacoesPorMarcacao.find((item) => item.nome === "Saída")?.variacao ?? 0)
-  return { variacoesPorMarcacao, totalVariacoes, minutosTolerados, minutosComputaveis, saldoFinal: podeTolerar ? saldoBruto - variacaoDaDuracao : saldoBruto }
+  const entradaVariacao = variacoesPorMarcacao.find((item) => item.nome === "Entrada")?.variacao ?? 0
+  const saidaVariacao = variacoesPorMarcacao.find((item) => item.nome === "Saída")?.variacao ?? 0
+  const variacaoDaDuracao = Math.max(0, -entradaVariacao) + Math.max(0, saidaVariacao)
+  return { variacoesPorMarcacao, totalVariacoes, minutosTolerados: podeTolerar ? variacaoDaDuracao : 0, minutosComputaveis: podeTolerar ? 0 : variacaoDaDuracao, saldoFinal: podeTolerar ? saldoBruto - variacaoDaDuracao : saldoBruto }
 }
 
 export type OccurrenceType = "normal" | "holiday" | "justified_absence" | "unjustified_absence" | "medical_certificate" | "compensatory_day_off" | "early_departure" | "compensatory_early_departure"
@@ -113,6 +115,9 @@ export interface DayCalculation {
   totalVariacoes: number
   minutosTolerados: number
   minutosComputaveis: number
+  intervalo: { realizado: number; previsto: number; diferenca: number; status: "SEM_INTERVALO" | "REDUZIDO" | "REGULAR" | "SUPERIOR_AO_PREVISTO" }
+  alertas: string[]
+  regraAplicada: { regra: string; versao: string; origem: string; dataAplicacao: string }
 }
 
 /** Retorna true se a data YYYY-MM-DD cai em um sábado. */
@@ -186,6 +191,13 @@ export function calculateDay(entry: TimeEntry, member: Staff): DayCalculation {
   const lunchEnd = toDate(entry.lunchEnd)
 
   const lunchMinutes = Math.max(0, diffMinutes(lunchStart, lunchEnd))
+  const scheduled = scheduleForDay(member, entry.workDate)
+  const previstoInicioAlmoco = parseHHMM(scheduled.lunchStart)
+  const previstoFimAlmoco = parseHHMM(scheduled.lunchEnd)
+  const intervaloPrevisto = previstoInicioAlmoco !== null && previstoFimAlmoco !== null ? Math.max(0, previstoFimAlmoco - previstoInicioAlmoco) : 0
+  const intervaloDiferenca = lunchMinutes - intervaloPrevisto
+  const intervaloStatus = !lunchStart || !lunchEnd ? "SEM_INTERVALO" as const : intervaloDiferenca < -5 ? "REDUZIDO" as const : intervaloDiferenca > 0 ? "SUPERIOR_AO_PREVISTO" as const : "REGULAR" as const
+  const alertas = intervaloStatus === "REDUZIDO" ? ["ALERTA_DE_INTERVALO_IRREGULAR"] : intervaloStatus === "SUPERIOR_AO_PREVISTO" ? ["INTERVALO_SUPERIOR_AO_PREVISTO"] : []
   const grossMinutes = Math.max(0, diffMinutes(clockIn, clockOut))
   const workedMinutes = Math.max(0, grossMinutes - lunchMinutes)
 
@@ -194,7 +206,6 @@ export function calculateDay(entry: TimeEntry, member: Staff): DayCalculation {
   const complete = Boolean(clockIn && clockOut) || occurrence !== "normal"
   const absenceMinutes = occurrence === "unjustified_absence" || occurrence === "compensatory_day_off" ? scheduledMinutes : 0
   const creditedMinutes = occurrence === "medical_certificate" ? Math.min(scheduledMinutes, Number(entry.occurrenceNote?.match(/([0-9]+)\s*h/i)?.[1] ?? 0) * 60) : 0
-  const scheduled = scheduleForDay(member, entry.workDate)
   const scheduledIn = parseHHMM(scheduled.entry)
   const scheduledOut = parseHHMM(scheduled.exit)
   const actualIn = clockIn ? parseHHMM(formatTime(clockIn)) : null
@@ -218,6 +229,9 @@ export function calculateDay(entry: TimeEntry, member: Staff): DayCalculation {
     totalVariacoes: tolerancia?.totalVariacoes ?? 0,
     minutosTolerados: tolerancia?.minutosTolerados ?? 0,
     minutosComputaveis: tolerancia?.minutosComputaveis ?? 0,
+    intervalo: { realizado: lunchMinutes, previsto: intervaloPrevisto, diferenca: intervaloDiferenca, status: intervaloStatus },
+    alertas,
+    regraAplicada: { regra: "CLT Art. 58, §1º e intervalo intrajornada", versao: "2026.1", origem: "CLT/TST — parametrização padrão", dataAplicacao: new Date().toISOString() },
   }
 }
 
