@@ -61,10 +61,29 @@ function diffMinutes(start: Date | null, end: Date | null): number {
 }
 
 /** Aplica a tolerância legal de até 5 min por marcação e 10 min no dia. */
-export function calcularToleranciaArt58(clockInMinutes: number, clockOutMinutes: number, scheduledInMinutes: number, scheduledOutMinutes: number): { entrada: number; saida: number; total: number } {
-  const entrada = Math.min(5, Math.abs(clockInMinutes - scheduledInMinutes))
-  const saida = Math.min(5, Math.abs(clockOutMinutes - scheduledOutMinutes))
-  return { entrada, saida, total: Math.min(10, entrada + saida) }
+export function calcularToleranciaArt58({
+  marcacoes,
+  saldoBruto,
+}: {
+  marcacoes: Array<{ nome: string; prevista: number; realizada: number }>
+  saldoBruto: number
+}): {
+  variacoesPorMarcacao: Array<{ nome: string; variacao: number; dentroDoLimite: boolean }>
+  totalVariacoes: number
+  minutosTolerados: number
+  minutosComputaveis: number
+  saldoFinal: number
+} {
+  const variacoesPorMarcacao = marcacoes.map(({ nome, prevista, realizada }) => {
+    const variacao = realizada - prevista
+    return { nome, variacao, dentroDoLimite: Math.abs(variacao) <= 5 }
+  })
+  const totalVariacoes = variacoesPorMarcacao.reduce((total, item) => total + Math.abs(item.variacao), 0)
+  const podeTolerar = variacoesPorMarcacao.every((item) => item.dentroDoLimite) && totalVariacoes <= 10
+  const minutosTolerados = podeTolerar ? totalVariacoes : 0
+  const minutosComputaveis = Math.max(0, totalVariacoes - minutosTolerados)
+  const variacaoLiquida = variacoesPorMarcacao.reduce((total, item) => total + item.variacao, 0)
+  return { variacoesPorMarcacao, totalVariacoes, minutosTolerados, minutosComputaveis, saldoFinal: podeTolerar ? saldoBruto - variacaoLiquida : saldoBruto }
 }
 
 export type OccurrenceType = "normal" | "holiday" | "justified_absence" | "unjustified_absence" | "medical_certificate" | "compensatory_day_off" | "early_departure" | "compensatory_early_departure"
@@ -88,6 +107,10 @@ export interface DayCalculation {
   deficitMinutes: number // saldo negativo (faltou)
   balanceMinutes: number // workedMinutes - scheduledMinutes
   complete: boolean // registro completo (entrada + saída)
+  variacoesPorMarcacao: Array<{ nome: string; variacao: number; dentroDoLimite: boolean }>
+  totalVariacoes: number
+  minutosTolerados: number
+  minutosComputaveis: number
 }
 
 /** Retorna true se a data YYYY-MM-DD cai em um sábado. */
@@ -172,11 +195,14 @@ export function calculateDay(entry: TimeEntry, member: Staff): DayCalculation {
   const scheduled = scheduleForDay(member, entry.workDate)
   const scheduledIn = parseHHMM(scheduled.entry)
   const scheduledOut = parseHHMM(scheduled.exit)
-  const actualIn = clockIn ? Number(formatTime(clockIn).replace(":", "")) : 0
-  const actualOut = clockOut ? Number(formatTime(clockOut).replace(":", "")) : 0
-  const tolerance = scheduledIn !== null && scheduledOut !== null && clockIn && clockOut ? calcularToleranciaArt58(Math.floor(actualIn / 100) * 60 + actualIn % 100, Math.floor(actualOut / 100) * 60 + actualOut % 100, scheduledIn, scheduledOut).total : 0
-  const earlyDepartureMinutes = occurrence === "early_departure" || occurrence === "compensatory_early_departure" ? Math.max(0, scheduledMinutes - workedMinutes - tolerance) : 0
-  const balanceMinutes = occurrence === "holiday" ? 0 : complete ? workedMinutes + creditedMinutes - scheduledMinutes - earlyDepartureMinutes + tolerance : -absenceMinutes
+  const actualIn = clockIn ? parseHHMM(formatTime(clockIn)) : null
+  const actualOut = clockOut ? parseHHMM(formatTime(clockOut)) : null
+  const saldoBruto = workedMinutes + creditedMinutes - scheduledMinutes
+  const tolerancia = scheduledIn !== null && scheduledOut !== null && actualIn !== null && actualOut !== null
+    ? calcularToleranciaArt58({ marcacoes: [{ nome: "Entrada", prevista: scheduledIn, realizada: actualIn }, { nome: "Saída", prevista: scheduledOut, realizada: actualOut }], saldoBruto })
+    : null
+  const earlyDepartureMinutes = occurrence === "early_departure" || occurrence === "compensatory_early_departure" ? Math.max(0, scheduledMinutes - workedMinutes) : 0
+  const balanceMinutes = occurrence === "holiday" ? 0 : complete ? (tolerancia?.saldoFinal ?? saldoBruto) - earlyDepartureMinutes : -absenceMinutes
 
   return {
     workedMinutes,
@@ -186,6 +212,10 @@ export function calculateDay(entry: TimeEntry, member: Staff): DayCalculation {
     deficitMinutes: balanceMinutes < 0 ? -balanceMinutes : 0,
     balanceMinutes,
     complete,
+    variacoesPorMarcacao: tolerancia?.variacoesPorMarcacao ?? [],
+    totalVariacoes: tolerancia?.totalVariacoes ?? 0,
+    minutosTolerados: tolerancia?.minutosTolerados ?? 0,
+    minutosComputaveis: tolerancia?.minutosComputaveis ?? 0,
   }
 }
 
