@@ -5,7 +5,7 @@
 .print-sheet { display: none; }
 
 @media print {
-  @page { size: A4 portrait; margin: 10mm 12mm; }
+  @page { size: A4 portrait; margin: 5mm 8mm; }
   html, body { background: white !important; color: black !important; }
   body > header, body > nav { display: none !important; }
   body { font-family: Arial, sans-serif !important; font-size: 9pt; }
@@ -13,7 +13,7 @@
   main { max-width: none !important; gap: 12px !important; padding: 0 !important; }
   main > *:not(.print-sheet) { display: none !important; }
   .print-sheet + * { display: none !important; }
-  .print-sheet { display: block !important; color: #111 !important; font-family: Arial, sans-serif; font-size: 8pt; }
+  .print-sheet { display: block !important; color: #111 !important; font-family: Arial, sans-serif; font-size: 7pt; page-break-inside: avoid; overflow: hidden; }
   .print-sheet-title { margin: 0 0 5px; text-align: center; font-size: 13pt; font-weight: 800; }
   .print-sheet-section-title { border: 1px solid #555; background: #f1f1f1 !important; padding: 3px; text-align: center; font-size: 9pt; font-weight: 700; }
   .print-sheet-grid { display: grid; border-left: 1px solid #777; border-top: 1px solid #777; }
@@ -23,7 +23,7 @@
   .print-sheet-grid .wide { grid-column: 1 / -1; }
   .print-sheet-table { margin-top: 7px; width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 7.5pt; }
   .print-sheet-table th { height: 30px; background: #f1f1f1 !important; text-align: center; vertical-align: middle; font-weight: 700; white-space: normal; }
-  .print-sheet-table td { height: 18px; text-align: center; vertical-align: middle; }
+  .print-sheet-table td { height: 14px; text-align: center; vertical-align: middle; }
   .print-sheet-table th, .print-sheet-table td { border: 1px solid #555 !important; padding: 2px 3px !important; color: #111 !important; }
   .print-sheet-table th:first-child, .print-sheet-table td:first-child { width: 8%; }
   .print-sheet-table th:nth-child(2), .print-sheet-table td:nth-child(2), .print-sheet-table th:nth-child(5), .print-sheet-table td:nth-child(5) { width: 12%; }
