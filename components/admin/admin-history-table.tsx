@@ -1,6 +1,7 @@
 "use client"
 
 import { EditEntryDialog } from "@/components/admin/edit-entry-dialog"
+import { deleteTimeEntry } from "@/app/actions/admin"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
@@ -13,7 +14,8 @@ import {
 } from "@/components/ui/table"
 import type { Staff, TimeEntry } from "@/lib/db/schema"
 import { calculateDay, formatDateBR, formatMinutes, formatTime } from "@/lib/time-utils"
-import { Pencil } from "lucide-react"
+import { Pencil, Trash2 } from "lucide-react"
+import { useTransition } from "react"
 import { useState } from "react"
 
 export function AdminHistoryTable({
@@ -23,9 +25,8 @@ export function AdminHistoryTable({
   entries: TimeEntry[]
   member: Staff
 }) {
-  const [editing, setEditing] = useState<{ workDate: string; entry: TimeEntry | null } | null>(
-    null,
-  )
+  const [editing, setEditing] = useState<{ workDate: string; entry: TimeEntry | null } | null>(null)
+  const [isDeleting, startDeleting] = useTransition()
 
   if (entries.length === 0) {
     return (
@@ -91,16 +92,18 @@ export function AdminHistoryTable({
                     )}
                   </TableCell>
                   <TableCell className="text-right">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() =>
-                        setEditing({ workDate: entry.workDate, entry })
-                      }
-                    >
-                      <Pencil className="size-4" />
-                      <span className="sr-only">Editar registro</span>
-                    </Button>
+                    <div className="flex justify-end gap-1">
+                      <Button variant="ghost" size="sm" onClick={() => setEditing({ workDate: entry.workDate, entry })}>
+                        <Pencil className="size-4" /><span className="sr-only">Editar registro</span>
+                      </Button>
+                      <Button variant="ghost" size="sm" className="text-destructive" disabled={isDeleting} onClick={() => {
+                        if (!window.confirm(`Excluir o registro de ${formatDateBR(entry.workDate)}? Essa ação não pode ser desfeita.`)) return
+                        const form = new FormData(); form.set("entryId", String(entry.id))
+                        startDeleting(() => { void deleteTimeEntry(form) })
+                      }}>
+                        <Trash2 className="size-4" /><span className="sr-only">Excluir registro</span>
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               )

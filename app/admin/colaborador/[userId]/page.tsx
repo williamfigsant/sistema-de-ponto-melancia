@@ -31,17 +31,23 @@ import { notFound } from "next/navigation"
 
 export default async function ColaboradorPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ userId: string }>
+  searchParams: Promise<{ mes?: string; ano?: string }>
 }) {
   const admin = await requireAdmin()
   const { userId } = await params
+  const search = await searchParams
 
   const member = await getStaffByUserId(userId)
   if (!member) notFound()
 
   // Registros do mês corrente.
-  const sinceISO = currentMonthStartISO()
+  const current = currentMonthStartISO().slice(0, 7).split("-").map(Number)
+  const selectedYear = Number(search.ano) || current[0]
+  const selectedMonth = Math.min(12, Math.max(1, Number(search.mes) || current[1]))
+  const sinceISO = `${selectedYear}-${String(selectedMonth).padStart(2, "0")}-01`
 
   const entries = await getEntriesForUser(member.userId, sinceISO)
   const totals = aggregateDays(entries, member)
@@ -119,6 +125,10 @@ export default async function ColaboradorPage({
             Voltar
           </Button>
 
+          <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+            <form method="get" className="flex items-end gap-2"><label className="grid gap-1 text-sm">Mês<select name="mes" defaultValue={String(selectedMonth)} className="h-9 rounded-md border bg-background px-3"><option value="1">Janeiro</option><option value="2">Fevereiro</option><option value="3">Março</option><option value="4">Abril</option><option value="5">Maio</option><option value="6">Junho</option><option value="7">Julho</option><option value="8">Agosto</option><option value="9">Setembro</option><option value="10">Outubro</option><option value="11">Novembro</option><option value="12">Dezembro</option></select></label><label className="grid gap-1 text-sm">Ano<input name="ano" type="number" defaultValue={selectedYear} className="h-9 w-24 rounded-md border bg-background px-3" /></label><button className="h-9 rounded-md bg-primary px-3 text-sm text-primary-foreground">Consultar</button></form>
+          </div>
+
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <div className="flex items-center gap-2">
@@ -165,6 +175,11 @@ export default async function ColaboradorPage({
         <Card className="print-hidden">
           <CardHeader><CardTitle className="text-lg">Calendário de registros</CardTitle><CardDescription>Clique em um dia para lançar ou editar o registro.</CardDescription></CardHeader>
           <CardContent><MonthCalendar entries={entries} member={member} year={year} month={month} /></CardContent>
+        </Card>
+
+        <Card className="print-hidden">
+          <CardHeader><CardTitle className="text-lg">Manual do banco de horas</CardTitle><CardDescription>Como cada lançamento afeta o saldo do colaborador.</CardDescription></CardHeader>
+          <CardContent className="grid gap-2 text-sm text-muted-foreground md:grid-cols-2"><p><b className="text-foreground">Registro normal:</b> compara horas trabalhadas com a jornada prevista; excedente vira hora extra e falta vira débito.</p><p><b className="text-foreground">Falta justificada (FJ):</b> dia abonado, sem débito no banco.</p><p><b className="text-foreground">Atestado (AT):</b> horas informadas como abonadas são creditadas até o limite da jornada.</p><p><b className="text-foreground">Falta injustificada (FI):</b> desconta toda a jornada prevista do dia.</p><p><b className="text-foreground">Folga compensatória (FC):</b> desconta a jornada prevista, pois consome saldo previamente acumulado.</p><p><b className="text-foreground">Saída antecipada (SA):</b> desconta a diferença entre o trabalhado e a jornada prevista.</p><p><b className="text-foreground">Saída antecipada compensatória (SAC):</b> registra a ocorrência, mas não gera débito.</p></CardContent>
         </Card>
 
         <Card>

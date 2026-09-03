@@ -181,6 +181,16 @@ function combineDateTime(workDate: string, hhmm: string | null): Date | null {
   return new Date(`${workDate}T${h}:${mm}:00${TZ_OFFSET}`)
 }
 
+export async function deleteTimeEntry(formData: FormData) {
+  await requireAdmin()
+  const entryId = Number(formData.get("entryId"))
+  if (!entryId || !Number.isInteger(entryId)) return { error: "Registro inválido." }
+  await db.delete(timeEntries).where(eq(timeEntries.id, entryId))
+  revalidatePath("/admin")
+  revalidatePath("/admin/colaborador/[userId]", "page")
+  return { success: true }
+}
+
 export async function updateTimeEntry(formData: FormData) {
   await requireAdmin()
 
