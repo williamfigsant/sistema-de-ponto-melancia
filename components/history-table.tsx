@@ -59,7 +59,7 @@ export function HistoryTable({
                 </TableCell>
                 <TableCell className="tabular-nums">{formatTime(entry.clockOut)}</TableCell>
                 <TableCell className="text-right tabular-nums">
-                  {calc.complete ? <div><div>{formatMinutes(calc.workedMinutes)}</div>{(calc.totalVariacoes > 0 || calc.alertas.length > 0) && <div className="text-[10px] text-muted-foreground">Art. 58: {calc.totalVariacoes}min · tolerados: {calc.minutosTolerados}min · intervalo: {calc.intervalo.status.toLowerCase().replaceAll("_", " ")}{calc.alertas.length > 0 ? ` · ${calc.alertas.join(", ")}` : ""}</div>}</div> : "--"}
+                  {calc.complete ? <div><div>{formatMinutes(calc.workedMinutes)}</div>{(calc.totalVariacoes > 0 || calc.alertas.length > 0) && <div className="text-[10px] text-muted-foreground">Auditoria de marcações: {calc.totalVariacoes}min · tolerados: {calc.minutosTolerados}min · excedente do intervalo: {calc.intervalo.excedente}min · status: {calc.intervalo.status.toLowerCase().replaceAll("_", " ")}{calc.alertas.length > 0 ? ` · ${calc.alertas.join(", ")}` : ""}</div>}</div> : "--"}
                 </TableCell>
                 <TableCell className="text-right tabular-nums">
                   {calc.complete ? (
