@@ -82,8 +82,10 @@ export function calcularToleranciaArt58({
   const podeTolerar = variacoesPorMarcacao.every((item) => item.dentroDoLimite) && totalVariacoes <= 10
   const minutosTolerados = podeTolerar ? totalVariacoes : 0
   const minutosComputaveis = Math.max(0, totalVariacoes - minutosTolerados)
-  const variacaoLiquida = variacoesPorMarcacao.reduce((total, item) => total + item.variacao, 0)
-  return { variacoesPorMarcacao, totalVariacoes, minutosTolerados, minutosComputaveis, saldoFinal: podeTolerar ? saldoBruto - variacaoLiquida : saldoBruto }
+  // A duração aumenta quando a entrada ocorre antes e/ou a saída depois.
+  // Esses minutos devem ser retirados do saldo quando estiverem dentro da tolerância.
+  const variacaoDaDuracao = -((variacoesPorMarcacao.find((item) => item.nome === "Entrada")?.variacao ?? 0)) + (variacoesPorMarcacao.find((item) => item.nome === "Saída")?.variacao ?? 0)
+  return { variacoesPorMarcacao, totalVariacoes, minutosTolerados, minutosComputaveis, saldoFinal: podeTolerar ? saldoBruto - variacaoDaDuracao : saldoBruto }
 }
 
 export type OccurrenceType = "normal" | "holiday" | "justified_absence" | "unjustified_absence" | "medical_certificate" | "compensatory_day_off" | "early_departure" | "compensatory_early_departure"
