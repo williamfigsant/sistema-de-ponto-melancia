@@ -59,7 +59,7 @@ export function HistoryTable({
                 </TableCell>
                 <TableCell className="tabular-nums">{formatTime(entry.clockOut)}</TableCell>
                 <TableCell className="text-right tabular-nums">
-                  {calc.complete ? formatMinutes(calc.workedMinutes) : "--"}
+                  {calc.complete ? <div><div>{formatMinutes(calc.workedMinutes)}</div>{calc.totalVariacoes > 0 && <div className="text-[10px] text-muted-foreground">Tolerância Art. 58: {calc.minutosTolerados}min</div>}</div> : "--"}
                 </TableCell>
                 <TableCell className="text-right tabular-nums">
                   {calc.complete ? (
