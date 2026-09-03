@@ -201,7 +201,7 @@ export async function updateTimeEntry(formData: FormData) {
   const lunchEnd = String(formData.get("lunchEnd") ?? "").trim() || null
   const clockOut = String(formData.get("clockOut") ?? "").trim() || null
   const occurrenceType = String(formData.get("occurrenceType") ?? "normal")
-  const allowedOccurrences = ["normal", "justified_absence", "unjustified_absence", "medical_certificate", "compensatory_day_off", "early_departure", "compensatory_early_departure"]
+  const allowedOccurrences = ["normal", "holiday", "justified_absence", "unjustified_absence", "medical_certificate", "compensatory_day_off", "early_departure", "compensatory_early_departure"]
 
   if (!employeeUserId || !workDate || !allowedOccurrences.includes(occurrenceType)) return { error: "Dados inválidos." }
   for (const v of [clockIn, lunchStart, lunchEnd, clockOut]) {
