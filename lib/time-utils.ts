@@ -80,14 +80,14 @@ export function calcularToleranciaArt58({
   })
   const totalVariacoes = variacoesPorMarcacao.reduce((total, item) => total + Math.abs(item.variacao), 0)
   const podeTolerar = variacoesPorMarcacao.every((item) => item.dentroDoLimite) && totalVariacoes <= 10
-  const minutosTolerados = podeTolerar ? totalVariacoes : 0
-  const minutosComputaveis = Math.max(0, totalVariacoes - minutosTolerados)
-  // A duração aumenta quando a entrada ocorre antes e/ou a saída depois.
-  // Esses minutos devem ser retirados do saldo quando estiverem dentro da tolerância.
   const entradaVariacao = variacoesPorMarcacao.find((item) => item.nome === "Entrada")?.variacao ?? 0
   const saidaVariacao = variacoesPorMarcacao.find((item) => item.nome === "Saída")?.variacao ?? 0
-  const variacaoDaDuracao = Math.max(0, -entradaVariacao) + Math.max(0, saidaVariacao)
-  return { variacoesPorMarcacao, totalVariacoes, minutosTolerados: podeTolerar ? variacaoDaDuracao : 0, minutosComputaveis: podeTolerar ? 0 : variacaoDaDuracao, saldoFinal: podeTolerar ? saldoBruto - variacaoDaDuracao : saldoBruto }
+  // A tolerância deve atuar sobre a duração líquida, nunca sobre a soma das marcações.
+  // Ex.: 09:03–18:03 mantém a mesma duração e não altera o saldo.
+  const variacaoDaDuracao = saidaVariacao - entradaVariacao
+  const minutosTolerados = podeTolerar ? Math.abs(variacaoDaDuracao) : 0
+  const minutosComputaveis = podeTolerar ? 0 : Math.abs(variacaoDaDuracao)
+  return { variacoesPorMarcacao, totalVariacoes, minutosTolerados, minutosComputaveis, saldoFinal: podeTolerar ? saldoBruto - variacaoDaDuracao : saldoBruto }
 }
 
 export type OccurrenceType = "normal" | "holiday" | "justified_absence" | "unjustified_absence" | "medical_certificate" | "compensatory_day_off" | "early_departure" | "compensatory_early_departure"
