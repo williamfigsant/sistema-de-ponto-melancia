@@ -115,7 +115,7 @@ export interface DayCalculation {
   totalVariacoes: number
   minutosTolerados: number
   minutosComputaveis: number
-  intervalo: { realizado: number; previsto: number; diferenca: number; status: "SEM_INTERVALO" | "REDUZIDO" | "REGULAR" | "SUPERIOR_AO_PREVISTO" }
+  intervalo: { realizado: number; previsto: number; diferenca: number; excedente: number; status: "SEM_INTERVALO" | "REDUZIDO" | "REGULAR" | "SUPERIOR_AO_PREVISTO" }
   alertas: string[]
   regraAplicada: { regra: string; versao: string; origem: string; dataAplicacao: string }
 }
@@ -214,8 +214,9 @@ export function calculateDay(entry: TimeEntry, member: Staff): DayCalculation {
   const tolerancia = scheduledIn !== null && scheduledOut !== null && actualIn !== null && actualOut !== null
     ? calcularToleranciaArt58({ marcacoes: [{ nome: "Entrada", prevista: scheduledIn, realizada: actualIn }, { nome: "Saída", prevista: scheduledOut, realizada: actualOut }], saldoBruto })
     : null
+  const excedenteIntervalo = Math.max(0, intervaloDiferenca)
   const earlyDepartureMinutes = occurrence === "early_departure" || occurrence === "compensatory_early_departure" ? Math.max(0, scheduledMinutes - workedMinutes) : 0
-  const balanceMinutes = occurrence === "holiday" ? 0 : complete ? (tolerancia?.saldoFinal ?? saldoBruto) - earlyDepartureMinutes : -absenceMinutes
+  const balanceMinutes = occurrence === "holiday" ? 0 : complete ? (tolerancia?.saldoFinal ?? saldoBruto) - earlyDepartureMinutes - excedenteIntervalo : -absenceMinutes
 
   return {
     workedMinutes,
@@ -229,7 +230,7 @@ export function calculateDay(entry: TimeEntry, member: Staff): DayCalculation {
     totalVariacoes: tolerancia?.totalVariacoes ?? 0,
     minutosTolerados: tolerancia?.minutosTolerados ?? 0,
     minutosComputaveis: tolerancia?.minutosComputaveis ?? 0,
-    intervalo: { realizado: lunchMinutes, previsto: intervaloPrevisto, diferenca: intervaloDiferenca, status: intervaloStatus },
+    intervalo: { realizado: lunchMinutes, previsto: intervaloPrevisto, diferenca: intervaloDiferenca, excedente: excedenteIntervalo, status: intervaloStatus },
     alertas,
     regraAplicada: { regra: "CLT Art. 58, §1º e intervalo intrajornada", versao: "2026.1", origem: "CLT/TST — parametrização padrão", dataAplicacao: new Date().toISOString() },
   }
