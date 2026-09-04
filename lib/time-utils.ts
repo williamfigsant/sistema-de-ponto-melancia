@@ -216,7 +216,8 @@ export function calculateDay(entry: TimeEntry, member: Staff): DayCalculation {
     : null
   const excedenteIntervalo = Math.max(0, intervaloDiferenca)
   const earlyDepartureMinutes = occurrence === "early_departure" || occurrence === "compensatory_early_departure" ? Math.max(0, scheduledMinutes - workedMinutes) : 0
-  const balanceMinutes = occurrence === "holiday" ? 0 : complete ? (tolerancia?.saldoFinal ?? saldoBruto) - earlyDepartureMinutes - excedenteIntervalo : -absenceMinutes
+  // workedMinutes já desconta o intervalo real. Não subtrair o excedente novamente.
+  const balanceMinutes = occurrence === "holiday" ? 0 : complete ? (tolerancia?.saldoFinal ?? saldoBruto) - earlyDepartureMinutes : -absenceMinutes
 
   return {
     workedMinutes,
