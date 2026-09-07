@@ -2,6 +2,7 @@ import { AddEntryDialog } from "@/components/admin/add-entry-dialog"
 import { AdminHistoryTable } from "@/components/admin/admin-history-table"
 import { MonthCalendar } from "@/components/admin/month-calendar"
 import { PrintReportButton } from "@/components/admin/print-report-button"
+import { MonthlyCalculationReport } from "@/components/admin/monthly-calculation-report"
 import { AppHeader } from "@/components/app-header"
 import { SummaryCards } from "@/components/summary-cards"
 import { Badge } from "@/components/ui/badge"
@@ -69,6 +70,7 @@ export default async function ColaboradorPage({
       <AppHeader userName={admin.name} roleLabel="Administrador" />
 
       <main className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-4 py-6">
+        <MonthlyCalculationReport entries={entries} member={member} year={year} month={month} />
         <section className="print-sheet" aria-label="Folha de ponto para impressão">
           <h1 className="print-sheet-title">FOLHA DE PONTO | MÊS/ANO: {monthLabel}</h1>
           <div className="print-sheet-section-title">DADOS DO EMPREGADOR</div>
