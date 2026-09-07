@@ -6,6 +6,7 @@ import {
   serial,
   date,
   integer,
+  numeric,
   unique,
 } from "drizzle-orm/pg-core"
 
@@ -89,6 +90,9 @@ export const staff = pgTable("staff", {
   companyAddress: text("companyAddress"),
   companyCity: text("companyCity").default("Maricá"),
   companyState: text("companyState").default("RJ"),
+  storeLatitude: numeric("storeLatitude", { precision: 10, scale: 7 }),
+  storeLongitude: numeric("storeLongitude", { precision: 10, scale: 7 }),
+  storeRadiusMeters: integer("storeRadiusMeters").notNull().default(100),
   active: boolean("active").notNull().default(true),
   createdAt: timestamp("createdAt").notNull().defaultNow(),
 })

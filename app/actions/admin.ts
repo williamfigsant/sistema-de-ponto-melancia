@@ -152,6 +152,13 @@ export async function updateEmployee(formData: FormData) {
   return { success: true }
 }
 
+function parseCoordinate(value: FormDataEntryValue | null): string | null {
+  const text = String(value ?? "").trim().replace(",", ".")
+  if (!text) return null
+  const number = Number(text)
+  return Number.isFinite(number) ? String(number) : null
+}
+
 export async function updateStoreSettings(formData: FormData) {
   await requireAdmin()
   const values = {
@@ -160,6 +167,9 @@ export async function updateStoreSettings(formData: FormData) {
     companyAddress: String(formData.get("companyAddress") ?? "").trim() || null,
     companyCity: String(formData.get("companyCity") ?? "Maricá").trim() || "Maricá",
     companyState: String(formData.get("companyState") ?? "RJ").trim().toUpperCase() || "RJ",
+    storeLatitude: parseCoordinate(formData.get("storeLatitude")),
+    storeLongitude: parseCoordinate(formData.get("storeLongitude")),
+    storeRadiusMeters: Math.min(1000, Math.max(10, Number(formData.get("storeRadiusMeters") ?? 100) || 100)),
   }
   await db.update(staff).set(values)
   revalidatePath("/admin")

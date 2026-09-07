@@ -26,6 +26,7 @@ export function PunchClock({ entry }: { entry: TimeEntry | null }) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [now, setNow] = useState<Date | null>(null)
+  const [locationStatus, setLocationStatus] = useState<"idle" | "loading" | "ready" | "error">("idle")
 
   useEffect(() => {
     setNow(new Date())
@@ -37,15 +38,27 @@ export function PunchClock({ entry }: { entry: TimeEntry | null }) {
   const nextStepIndex = STEPS.findIndex((s) => !entry?.[s.field])
 
   function handlePunch(type: PunchType) {
-    startTransition(async () => {
-      const result = await punch(type)
-      if (result?.error) {
-        toast.error(result.error)
-        return
-      }
-      toast.success("Ponto registrado.")
-      router.refresh()
-    })
+    setLocationStatus("loading")
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setLocationStatus("ready")
+        startTransition(async () => {
+          const result = await punch(type, { latitude: position.coords.latitude, longitude: position.coords.longitude, accuracy: position.coords.accuracy })
+          if (result?.error) {
+            toast.error(result.error)
+            return
+          }
+          toast.success("Ponto registrado.")
+          router.refresh()
+        })
+      },
+      () => {
+        setLocationStatus("error")
+        toast.error("Não foi possível obter sua localização. Permita o acesso ao GPS e tente novamente.")
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 },
+    )
+    return
   }
 
   return (
@@ -75,6 +88,8 @@ export function PunchClock({ entry }: { entry: TimeEntry | null }) {
           </p>
         </div>
 
+        <p className="text-center text-xs text-muted-foreground">{locationStatus === "loading" ? "Verificando localização..." : locationStatus === "error" ? "Localização necessária para registrar o ponto." : "Check-in permitido somente dentro do raio da loja."}</p>
+
         <div className="grid w-full max-w-md grid-cols-2 gap-3">
           {STEPS.map((step, index) => {
             const done = Boolean(entry?.[step.field])
@@ -84,7 +99,7 @@ export function PunchClock({ entry }: { entry: TimeEntry | null }) {
               <Button
                 key={step.type}
                 type="button"
-                disabled={done || !isNext || isPending}
+                disabled={done || !isNext || isPending || locationStatus === "loading"}
                 onClick={() => handlePunch(step.type)}
                 variant={isNext ? "default" : "outline"}
                 className="h-auto flex-col items-start gap-1 px-4 py-3 text-left"
