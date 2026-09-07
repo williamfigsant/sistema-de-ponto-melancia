@@ -72,7 +72,7 @@ export function AdminHistoryTable({
                   </TableCell>
                   <TableCell className="tabular-nums">{formatTime(entry.clockOut)}</TableCell>
                   <TableCell className="text-right tabular-nums">
-                    {calc.complete ? <div><div>{formatMinutes(calc.workedMinutes)}</div>{(calc.totalVariacoes > 0 || calc.alertas.length > 0) && <div className="text-[10px] text-muted-foreground">Auditoria de marcações: {calc.totalVariacoes}min · tolerados: {calc.minutosTolerados}min · excedente do intervalo: {calc.intervalo.excedente}min · status: {calc.intervalo.status.toLowerCase().replaceAll("_", " ")}{calc.alertas.length > 0 ? ` · ${calc.alertas.join(", ")}` : ""}</div>}</div> : "--"}
+                    {calc.complete ? <div><div>{formatMinutes(calc.workedMinutes)}</div>{(calc.totalVariacoes > 0 || calc.alertas.length > 0) && <div className="mt-1 flex flex-wrap items-center justify-end gap-1 text-[10px] text-muted-foreground"><span>Auditoria: {calc.totalVariacoes} min · tolerados: {calc.minutosTolerados} min · intervalo excedente: {calc.intervalo.excedente} min · {calc.intervalo.status.toLowerCase().replaceAll("_", " ")}</span>{calc.alertas.map((alerta) => <Badge key={alerta} variant="outline" className="px-1.5 py-0 text-[9px] font-medium normal-case">{alerta === "INTERVALO_SUPERIOR_AO_PREVISTO" ? "Intervalo superior ao previsto" : alerta === "ALERTA_DE_INTERVALO_IRREGULAR" ? "Intervalo irregular" : alerta}</Badge>)}</div>}</div> : "--"}
                   </TableCell>
                   <TableCell className="text-right tabular-nums">
                     {calc.complete ? (
