@@ -30,13 +30,15 @@ export async function punch(type: PunchType, location?: Location) {
   if (!profile.active) return { error: "Colaborador inativo." }
   const storeLatitude = profile.storeLatitude ? Number(profile.storeLatitude) : null
   const storeLongitude = profile.storeLongitude ? Number(profile.storeLongitude) : null
-  if (storeLatitude !== null && storeLongitude !== null) {
-    if (!location || !Number.isFinite(location.latitude) || !Number.isFinite(location.longitude)) return { error: "Ative a localização do dispositivo para registrar o ponto." }
-    if (!Number.isFinite(location.accuracy) || location.accuracy > 100) return { error: "A precisão do GPS está baixa. Tente novamente em um local com melhor sinal." }
-    const distance = distanceInMeters(storeLatitude, storeLongitude, location.latitude, location.longitude)
-    const radius = profile.storeRadiusMeters ?? 100
-    if (distance > radius) return { error: `Check-in bloqueado: você está a aproximadamente ${Math.round(distance)} m da loja. O limite é ${radius} m.` }
+  const radius = Number(profile.storeRadiusMeters ?? 100)
+  if (storeLatitude === null || storeLongitude === null || !Number.isFinite(storeLatitude) || !Number.isFinite(storeLongitude)) {
+    return { error: "A localização da loja ainda não foi configurada. O administrador precisa informar latitude e longitude antes do registro." }
   }
+  if (!location || !Number.isFinite(location.latitude) || !Number.isFinite(location.longitude)) return { error: "Ative a localização do dispositivo para registrar o ponto." }
+  if (!Number.isFinite(location.accuracy) || location.accuracy > 100) return { error: "A precisão do GPS está baixa. Tente novamente em um local com melhor sinal." }
+  if (!Number.isFinite(radius) || radius < 10) return { error: "O raio permitido da loja está configurado incorretamente." }
+  const distance = distanceInMeters(storeLatitude, storeLongitude, location.latitude, location.longitude)
+  if (distance > radius) return { error: `Check-in bloqueado: você está a aproximadamente ${Math.round(distance)} m da loja. O limite é ${radius} m.` }
 
   const workDate = todayISO()
   const now = new Date()
