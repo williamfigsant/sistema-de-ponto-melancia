@@ -20,7 +20,7 @@ export function AppHeader({
               {roleLabel}
             </Badge>
           </div>
-          <SignOutButton />
+          <span className="print-hidden"><SignOutButton /></span>
         </div>
       </div>
     </header>
