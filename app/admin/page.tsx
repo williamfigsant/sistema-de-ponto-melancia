@@ -20,6 +20,13 @@ export default async function AdminPage() {
   const allStaff = await listStaff()
   const employees = allStaff.filter((s) => s.role === "employee")
   const activeEmployees = employees.filter((member) => member.active)
+  const storeValues = allStaff.find((member) =>
+    member.companyCnpj ||
+    member.companyCep ||
+    member.companyAddress ||
+    member.storeLatitude ||
+    member.storeLongitude,
+  ) ?? allStaff[0]
 
   const sinceISO = currentMonthStartISO()
   const employeeSummaries = await Promise.all(activeEmployees.map(async (member) => {
@@ -47,7 +54,7 @@ export default async function AdminPage() {
 
         <EmployeeMonthlySummary rows={employeeSummaries} />
 
-        <StoreSettingsCard values={allStaff[0]} />
+        <StoreSettingsCard values={storeValues} />
 
         <Card>
           <CardHeader>
