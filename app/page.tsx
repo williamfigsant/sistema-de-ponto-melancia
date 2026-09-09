@@ -16,6 +16,7 @@ export default async function Home() {
   // Usuário autenticado mas sem perfil de staff (ex.: primeiro admin ainda
   // não configurado) vai para a rota de configuração inicial.
   if (!profile) redirect("/setup")
+  if (profile.mustChangePassword) redirect("/alterar-senha")
 
   if (profile.role === "admin") redirect("/admin")
   redirect("/painel")

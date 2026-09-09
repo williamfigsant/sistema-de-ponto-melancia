@@ -17,6 +17,7 @@ import { redirect } from "next/navigation"
 export default async function PainelPage() {
   const profile = await getCurrentStaff()
   if (!profile) redirect("/")
+  if (profile.mustChangePassword) redirect("/alterar-senha")
   if (profile.role === "admin") redirect("/admin")
 
   const today = todayISO()

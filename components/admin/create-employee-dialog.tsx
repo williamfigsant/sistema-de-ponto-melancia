@@ -24,6 +24,7 @@ export function CreateEmployeeDialog() {
   const router = useRouter()
   const [open, setOpen] = useState(false)
   const [isPending, startTransition] = useTransition()
+  const [initialPassword, setInitialPassword] = useState<string | null>(null)
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -34,8 +35,8 @@ export function CreateEmployeeDialog() {
         toast.error(result.error)
         return
       }
-      toast.success("Colaborador criado com sucesso.")
-      setOpen(false)
+      setInitialPassword(result.initialPassword ?? null)
+      toast.success("Colaborador criado. Guarde a senha inicial para entregar ao funcionário.")
       router.refresh()
     })
   }
@@ -55,6 +56,8 @@ export function CreateEmployeeDialog() {
               e-mail e a senha para entrar.
             </DialogDescription>
           </DialogHeader>
+
+          {initialPassword && <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 text-sm"><p className="font-medium">Senha inicial do colaborador</p><p className="mt-1 break-all font-mono">{initialPassword}</p><p className="mt-1 text-xs text-muted-foreground">Anote e entregue ao colaborador. Por segurança, ela não poderá ser recuperada depois.</p></div>}
 
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">

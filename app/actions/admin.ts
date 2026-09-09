@@ -3,7 +3,7 @@
 import { auth } from "@/lib/auth"
 import { db } from "@/lib/db"
 import { staff, timeEntries } from "@/lib/db/schema"
-import { requireAdmin } from "@/lib/session"
+import { getCurrentUserId, requireAdmin } from "@/lib/session"
 import { parseHHMM, TZ_OFFSET } from "@/lib/time-utils"
 import { and, eq } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
@@ -92,13 +92,14 @@ export async function createEmployee(formData: FormData) {
     satLunchStart,
     satLunchEnd,
     satExitTime,
+    mustChangePassword: true,
   })
 
-  revalidatePath("/admin")
-  return { success: true }
-}
+    revalidatePath("/admin")
+    return { success: true, initialPassword: password }
+  }
 
-// ---------------------------------------------------------------------------
+  // ---------------------------------------------------------------------------
 // Atualizar jornada / status do colaborador
 // ---------------------------------------------------------------------------
 export async function updateEmployee(formData: FormData) {
@@ -157,6 +158,14 @@ function parseCoordinate(value: FormDataEntryValue | null): string | null {
   if (!text) return null
   const number = Number(text)
   return Number.isFinite(number) ? String(number) : null
+}
+
+export async function completeInitialPasswordChange() {
+  const userId = await getCurrentUserId()
+  await db.update(staff).set({ mustChangePassword: false }).where(eq(staff.userId, userId))
+  revalidatePath("/")
+  revalidatePath("/painel")
+  return { success: true }
 }
 
 export async function updateStoreSettings(formData: FormData) {
