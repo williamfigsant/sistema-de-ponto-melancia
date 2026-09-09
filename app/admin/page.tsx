@@ -19,9 +19,10 @@ export default async function AdminPage() {
   const admin = await requireAdmin()
   const allStaff = await listStaff()
   const employees = allStaff.filter((s) => s.role === "employee")
+  const activeEmployees = employees.filter((member) => member.active)
 
   const sinceISO = currentMonthStartISO()
-  const employeeSummaries = await Promise.all(employees.map(async (member) => {
+  const employeeSummaries = await Promise.all(activeEmployees.map(async (member) => {
     const entries = await getEntriesForUser(member.userId, sinceISO)
     const agg = aggregateDays(entries, member)
     return { member, ...agg }
