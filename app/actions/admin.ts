@@ -2,7 +2,7 @@
 
 import { auth } from "@/lib/auth"
 import { db } from "@/lib/db"
-import { staff, timeEntries } from "@/lib/db/schema"
+import { staff, timeEntries, user } from "@/lib/db/schema"
 import { getCurrentUserId, requireAdmin } from "@/lib/session"
 import { parseHHMM, TZ_OFFSET } from "@/lib/time-utils"
 import { and, eq } from "drizzle-orm"
@@ -149,6 +149,24 @@ export async function updateEmployee(formData: FormData) {
     })
     .where(eq(staff.id, staffId))
 
+  revalidatePath("/admin")
+  return { success: true }
+}
+
+export async function toggleEmployeeStatus(userId: string, active: boolean) {
+  await requireAdmin()
+  if (!userId) throw new Error("Colaborador inválido")
+  await db.update(staff).set({ active }).where(eq(staff.userId, userId))
+  revalidatePath("/admin")
+  revalidatePath(`/admin/colaborador/${userId}`)
+  return { success: true }
+}
+
+export async function deleteEmployee(userId: string) {
+  await requireAdmin()
+  if (!userId) throw new Error("Colaborador inválido")
+  await db.delete(staff).where(eq(staff.userId, userId))
+  await db.delete(user).where(eq(user.id, userId))
   revalidatePath("/admin")
   return { success: true }
 }

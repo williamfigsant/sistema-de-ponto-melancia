@@ -2,7 +2,7 @@ import { AdminHistoryTable } from "@/components/admin/admin-history-table"
 import { CreateEmployeeDialog } from "@/components/admin/create-employee-dialog"
 import { EmployeeList } from "@/components/admin/employee-list"
 import { AppHeader } from "@/components/app-header"
-import { SummaryCards } from "@/components/summary-cards"
+import { EmployeeMonthlySummary } from "@/components/admin/employee-monthly-summary"
 import { StoreSettingsCard } from "@/components/admin/store-settings-card"
 import {
   Card,
@@ -20,24 +20,12 @@ export default async function AdminPage() {
   const allStaff = await listStaff()
   const employees = allStaff.filter((s) => s.role === "employee")
 
-  // Totais do mês corrente por colaborador para o resumo global.
   const sinceISO = currentMonthStartISO()
-
-  let totalOvertime = 0
-  let totalDeficit = 0
-  let totalWorked = 0
-  let daysCompleted = 0
-
-  await Promise.all(
-    employees.map(async (member) => {
-      const entries = await getEntriesForUser(member.userId, sinceISO)
-      const agg = aggregateDays(entries, member)
-      totalOvertime += agg.totalOvertime
-      totalDeficit += agg.totalDeficit
-      totalWorked += agg.totalWorked
-      daysCompleted += agg.daysCompleted
-    }),
-  )
+  const employeeSummaries = await Promise.all(employees.map(async (member) => {
+    const entries = await getEntriesForUser(member.userId, sinceISO)
+    const agg = aggregateDays(entries, member)
+    return { member, ...agg }
+  }))
 
   return (
     <div className="min-h-screen bg-secondary/30">
@@ -56,17 +44,7 @@ export default async function AdminPage() {
           <CreateEmployeeDialog />
         </div>
 
-        <div>
-          <h2 className="mb-2 text-sm font-medium text-muted-foreground">
-            Resumo do mês (todos os colaboradores)
-          </h2>
-          <SummaryCards
-            totalWorked={totalWorked}
-            totalOvertime={totalOvertime}
-            totalDeficit={totalDeficit}
-            daysCompleted={daysCompleted}
-          />
-        </div>
+        <EmployeeMonthlySummary rows={employeeSummaries} />
 
         <StoreSettingsCard values={allStaff[0]} />
 
