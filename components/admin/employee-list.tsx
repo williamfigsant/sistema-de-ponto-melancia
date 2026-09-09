@@ -1,6 +1,7 @@
 "use client"
 
 import { EditEmployeeDialog } from "@/components/admin/edit-employee-dialog"
+import { deleteEmployee, toggleEmployeeStatus } from "@/app/actions/admin"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
@@ -15,10 +16,28 @@ import type { Staff } from "@/lib/db/schema"
 import { formatMinutes, scheduledMinutesForStaff } from "@/lib/time-utils"
 import { ChevronRight, Pencil } from "lucide-react"
 import Link from "next/link"
-import { useState } from "react"
+import { useRouter } from "next/navigation"
+import { useState, useTransition } from "react"
 
 export function EmployeeList({ members }: { members: Staff[] }) {
   const [editing, setEditing] = useState<Staff | null>(null)
+  const [isPending, startTransition] = useTransition()
+  const router = useRouter()
+
+  function handleToggle(member: Staff) {
+    startTransition(async () => {
+      await toggleEmployeeStatus(member.userId, !member.active)
+      router.refresh()
+    })
+  }
+
+  function handleDelete(member: Staff) {
+    if (!window.confirm(`Excluir ${member.name}? Essa ação não pode ser desfeita.`)) return
+    startTransition(async () => {
+      await deleteEmployee(member.userId)
+      router.refresh()
+    })
+  }
 
   if (members.length === 0) {
     return (
@@ -67,6 +86,22 @@ export function EmployeeList({ members }: { members: Staff[] }) {
                     >
                       <Pencil className="size-4" />
                       <span className="sr-only sm:not-sr-only">Editar</span>
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleToggle(member)}
+                      disabled={isPending}
+                    >
+                      {member.active ? "Inativar" : "Ativar"}
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => handleDelete(member)}
+                      disabled={isPending}
+                    >
+                      Excluir
                     </Button>
                     <Button
                       variant="outline"
