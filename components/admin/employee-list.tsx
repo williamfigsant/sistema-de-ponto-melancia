@@ -19,7 +19,7 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useState, useTransition } from "react"
 
-export function EmployeeList({ members }: { members: Staff[] }) {
+export function EmployeeList({ members }: { members: Array<Staff & { email: string | null }> }) {
   const [editing, setEditing] = useState<Staff | null>(null)
   const [isPending, startTransition] = useTransition()
   const router = useRouter()
@@ -63,7 +63,10 @@ export function EmployeeList({ members }: { members: Staff[] }) {
           <TableBody>
             {members.map((member) => (
               <TableRow key={member.id}>
-                <TableCell className="font-medium">{member.name}</TableCell>
+                <TableCell>
+                  <div className="font-medium">{member.name}</div>
+                  <div className="text-xs text-muted-foreground">{member.email ?? "E-mail não informado"}</div>
+                </TableCell>
                 <TableCell className="tabular-nums text-muted-foreground">
                   {member.entryTime ?? "--:--"} - {member.exitTime ?? "--:--"}
                 </TableCell>

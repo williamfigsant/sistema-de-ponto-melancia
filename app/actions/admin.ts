@@ -2,7 +2,7 @@
 
 import { auth } from "@/lib/auth"
 import { db } from "@/lib/db"
-import { staff, timeEntries, user } from "@/lib/db/schema"
+import { staff, timeAdjustments, timeEntries, user } from "@/lib/db/schema"
 import { getCurrentUserId, requireAdmin } from "@/lib/session"
 import { parseHHMM, TZ_OFFSET } from "@/lib/time-utils"
 import { and, eq } from "drizzle-orm"
@@ -154,6 +154,19 @@ export async function updateEmployee(formData: FormData) {
 
   revalidatePath("/admin")
   return { success: true }
+}
+
+export async function createTimeAdjustment(formData: FormData) {
+  await requireAdmin()
+  const staffId = String(formData.get("staffId") ?? "")
+  const hours = Math.max(0, Number(formData.get("hours") ?? 0) || 0)
+  const minutes = Math.min(59, Math.max(0, Number(formData.get("minutes") ?? 0) || 0))
+  const direction = formData.get("direction") === "debit" ? -1 : 1
+  const description = String(formData.get("description") ?? "").trim()
+  if (!staffId || !description || (hours === 0 && minutes === 0)) throw new Error("Informe horas, minutos e descrição.")
+  await db.insert(timeAdjustments).values({ id: crypto.randomUUID(), staffId, minutes: direction * (hours * 60 + minutes), description })
+  revalidatePath("/admin")
+  revalidatePath(`/admin/colaborador/${staffId}`)
 }
 
 export async function toggleEmployeeStatus(userId: string, active: boolean) {
