@@ -266,7 +266,7 @@ export function aggregateDays(
     totalWorked,
     totalOvertime,
     totalDeficit,
-    totalBalance: totalOvertime - totalDeficit,
+    totalBalance: member.previousBalanceMinutes + totalOvertime - totalDeficit,
     daysCompleted,
   }
 }

@@ -60,6 +60,14 @@ export function EditEmployeeDialog({
 
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
+              <Label htmlFor="previousBalanceHours">Saldo acumulado anterior</Label>
+              <div className="grid grid-cols-2 gap-2">
+                <Input id="previousBalanceHours" name="previousBalanceHours" type="number" min="0" defaultValue={Math.floor(Math.abs(member.previousBalanceMinutes) / 60)} placeholder="Horas" />
+                <Input id="previousBalanceMinutes" name="previousBalanceMinutes" type="number" min="0" max="59" defaultValue={Math.abs(member.previousBalanceMinutes) % 60} placeholder="Minutos" />
+              </div>
+              <label className="flex items-center gap-2 text-sm"><input type="checkbox" name="previousBalanceNegative" defaultChecked={member.previousBalanceMinutes < 0} className="size-4" /> Saldo anterior é débito</label>
+            </div>
+            <div className="grid gap-2">
               <Label htmlFor="name">Nome</Label>
               <Input id="name" name="name" defaultValue={member.name} required />
             </div>

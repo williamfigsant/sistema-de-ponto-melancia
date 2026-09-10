@@ -3,6 +3,7 @@
 import type React from "react"
 
 import { createEmployee } from "@/app/actions/admin"
+import { PasswordInput } from "@/components/password-input"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -76,10 +77,9 @@ export function CreateEmployeeDialog() {
             </div>
             <div className="grid gap-2">
               <Label htmlFor="password">Senha inicial</Label>
-              <Input
+              <PasswordInput
                 id="password"
                 name="password"
-                type="text"
                 required
                 minLength={8}
                 placeholder="Mínimo 8 caracteres"

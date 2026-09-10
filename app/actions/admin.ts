@@ -116,7 +116,9 @@ export async function updateEmployee(formData: FormData) {
   const satLunchEnd = String(formData.get("satLunchEnd") ?? "").trim() || null
   const satExitTime = String(formData.get("satExitTime") ?? "").trim() || null
   const active = formData.get("active") === "on" || formData.get("active") === "true"
-
+  const balanceHours = Math.max(0, Number(formData.get("previousBalanceHours") ?? 0) || 0)
+  const balanceMinutes = Math.min(59, Math.max(0, Number(formData.get("previousBalanceMinutes") ?? 0) || 0))
+  const previousBalanceMinutes = (balanceHours * 60 + balanceMinutes) * (formData.get("previousBalanceNegative") === "on" ? -1 : 1)
   if (!staffId || !name) return { error: "Dados inválidos." }
   for (const v of [
     entryTime,
@@ -146,6 +148,7 @@ export async function updateEmployee(formData: FormData) {
       satLunchEnd,
       satExitTime,
       active,
+      previousBalanceMinutes,
     })
     .where(eq(staff.id, staffId))
 
