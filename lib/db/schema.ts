@@ -99,6 +99,14 @@ export const staff = pgTable("staff", {
   createdAt: timestamp("createdAt").notNull().defaultNow(),
 })
 
+export const timeAdjustments = pgTable("timeAdjustments", {
+  id: text("id").primaryKey(),
+  staffId: text("staffId").notNull(),
+  minutes: integer("minutes").notNull(),
+  description: text("description").notNull(),
+  createdAt: timestamp("createdAt").notNull().defaultNow(),
+})
+
 // Registro de ponto diário (um por colaborador por dia).
 export const timeEntries = pgTable(
   "time_entries",
@@ -121,4 +129,5 @@ export const timeEntries = pgTable(
 )
 
 export type Staff = typeof staff.$inferSelect
+export type TimeAdjustment = typeof timeAdjustments.$inferSelect
 export type TimeEntry = typeof timeEntries.$inferSelect

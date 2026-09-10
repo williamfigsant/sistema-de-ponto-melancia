@@ -241,6 +241,7 @@ export function calculateDay(entry: TimeEntry, member: Staff): DayCalculation {
 export function aggregateDays(
   entries: TimeEntry[],
   member: Staff,
+  adjustmentMinutes = 0,
 ): {
   totalWorked: number
   totalOvertime: number
@@ -266,7 +267,7 @@ export function aggregateDays(
     totalWorked,
     totalOvertime,
     totalDeficit,
-    totalBalance: member.previousBalanceMinutes + totalOvertime - totalDeficit,
+    totalBalance: member.previousBalanceMinutes + adjustmentMinutes + totalOvertime - totalDeficit,
     daysCompleted,
   }
 }

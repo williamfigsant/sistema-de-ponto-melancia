@@ -1,4 +1,5 @@
 import { AddEntryDialog } from "@/components/admin/add-entry-dialog"
+import { createTimeAdjustment } from "@/app/actions/admin"
 import { AdminHistoryTable } from "@/components/admin/admin-history-table"
 import { MonthCalendar } from "@/components/admin/month-calendar"
 import { PrintReportButton } from "@/components/admin/print-report-button"
@@ -14,7 +15,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import { getEntriesForUser, getStaffByUserId } from "@/lib/queries"
+import { getAdjustmentMinutes, getEntriesForUser, getStaffByUserId } from "@/lib/queries"
 import { requireAdmin } from "@/lib/session"
 import {
   aggregateDays,
@@ -50,8 +51,11 @@ export default async function ColaboradorPage({
   const selectedMonth = Math.min(12, Math.max(1, Number(search.mes) || current[1]))
   const sinceISO = `${selectedYear}-${String(selectedMonth).padStart(2, "0")}-01`
 
-  const entries = await getEntriesForUser(member.userId, sinceISO)
-  const totals = aggregateDays(entries, member)
+  const [entries, adjustmentMinutes] = await Promise.all([
+    getEntriesForUser(member.userId, sinceISO),
+    getAdjustmentMinutes(member.id),
+  ])
+  const totals = aggregateDays(entries, member, adjustmentMinutes)
   const scheduled = scheduledMinutesForStaff(member)
   // "2024-01-06" é um sábado — usado só para calcular a carga de sábado.
   const scheduledSaturday = scheduledMinutesForStaff(member, "2024-01-06")
@@ -70,6 +74,23 @@ export default async function ColaboradorPage({
       <AppHeader userName={admin.name} roleLabel="Administrador" />
 
       <main className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-4 py-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Lançar ajuste no banco de horas</CardTitle>
+            <CardDescription>Informe horas e minutos para adicionar crédito ou débito manual.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form action={createTimeAdjustment} className="grid gap-3 sm:grid-cols-[1fr_1fr_1fr_2fr_auto] sm:items-end">
+              <input type="hidden" name="staffId" value={member.id} />
+              <label className="grid gap-1 text-sm"><span>Horas</span><input className="h-9 rounded-md border bg-background px-3" name="hours" type="number" min="0" defaultValue="0" /></label>
+              <label className="grid gap-1 text-sm"><span>Minutos</span><input className="h-9 rounded-md border bg-background px-3" name="minutes" type="number" min="0" max="59" defaultValue="0" /></label>
+              <label className="grid gap-1 text-sm"><span>Tipo</span><select className="h-9 rounded-md border bg-background px-3" name="direction" defaultValue="credit"><option value="credit">Crédito</option><option value="debit">Débito</option></select></label>
+              <label className="grid gap-1 text-sm"><span>Descrição</span><input className="h-9 rounded-md border bg-background px-3" name="description" required placeholder="Ex.: saldo anterior" /></label>
+              <Button type="submit">Lançar</Button>
+            </form>
+          </CardContent>
+        </Card>
+
         <MonthlyCalculationReport entries={entries} member={member} year={year} month={month} />
         <section className="print-sheet" aria-label="Folha de ponto para impressão">
           <h1 className="print-sheet-title">FOLHA DE PONTO | MÊS/ANO: {monthLabel}</h1>
