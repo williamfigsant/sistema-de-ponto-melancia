@@ -11,7 +11,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import { getAdjustmentMinutes, getEntriesForUser, listStaff } from "@/lib/queries"
+import { getAdjustmentMinutes, getEntriesForUser, getTimeAdjustments, listStaff } from "@/lib/queries"
 import { requireAdmin } from "@/lib/session"
 import { aggregateDays, currentMonthStartISO } from "@/lib/time-utils"
 
@@ -19,6 +19,9 @@ export default async function AdminPage() {
   const admin = await requireAdmin()
   const allStaff = await listStaff()
   const employees = allStaff.filter((s) => s.role === "employee")
+  const employeesWithAdjustments = await Promise.all(
+    employees.map(async (member) => ({ ...member, adjustments: await getTimeAdjustments(member.id) })),
+  )
   const activeEmployees = employees.filter((member) => member.active)
   const storeValues = allStaff.find((member) =>
     member.companyCnpj ||
@@ -68,7 +71,7 @@ export default async function AdminPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <EmployeeList members={employees} />
+            <EmployeeList members={employeesWithAdjustments} />
           </CardContent>
         </Card>
       </main>

@@ -3,6 +3,8 @@
 import type React from "react"
 
 import { updateEmployee } from "@/app/actions/admin"
+import { TimeAdjustmentsTable } from "@/components/admin/time-adjustments-table"
+import type { TimeAdjustment } from "@/lib/db/schema"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -24,7 +26,7 @@ export function EditEmployeeDialog({
   open,
   onOpenChange,
 }: {
-  member: Staff & { email?: string | null }
+  member: Staff & { email?: string | null; adjustments?: TimeAdjustment[] }
   open: boolean
   onOpenChange: (open: boolean) => void
 }) {
@@ -51,7 +53,7 @@ export function EditEmployeeDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-md">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
             <DialogTitle>Editar jornada</DialogTitle>
@@ -68,6 +70,13 @@ export function EditEmployeeDialog({
                 <div className="grid gap-1"><Label htmlFor="previousBalanceMinutes">Minutos</Label><Input id="previousBalanceMinutes" name="previousBalanceMinutes" type="number" min="0" max="59" defaultValue={Math.abs(member.previousBalanceMinutes) % 60} placeholder="0" /></div>
               </div>
               <label className="flex items-center gap-2 text-sm"><input type="checkbox" name="previousBalanceNegative" defaultChecked={member.previousBalanceMinutes < 0} className="size-4" /> Saldo anterior é débito</label>
+            </div>
+            <div className="grid gap-2 rounded-lg border bg-muted/30 p-3">
+              <div>
+                <p className="text-sm font-medium">Lançamentos adicionados</p>
+                <p className="text-xs text-muted-foreground">Confira e corrija os créditos ou débitos registrados.</p>
+              </div>
+              <TimeAdjustmentsTable adjustments={member.adjustments ?? []} staffId={member.id} />
             </div>
             <div className="grid gap-2">
               <Label htmlFor="name">Nome</Label>

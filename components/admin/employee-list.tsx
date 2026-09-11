@@ -12,15 +12,17 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import type { Staff } from "@/lib/db/schema"
+import type { Staff, TimeAdjustment } from "@/lib/db/schema"
 import { formatMinutes, scheduledMinutesForStaff } from "@/lib/time-utils"
 import { ChevronRight, Pencil } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useState, useTransition } from "react"
 
-export function EmployeeList({ members }: { members: Array<Staff & { email: string | null }> }) {
-  const [editing, setEditing] = useState<Staff | null>(null)
+type EmployeeWithAdjustments = Staff & { email: string | null; adjustments: TimeAdjustment[] }
+
+export function EmployeeList({ members }: { members: EmployeeWithAdjustments[] }) {
+  const [editing, setEditing] = useState<EmployeeWithAdjustments | null>(null)
   const [isPending, startTransition] = useTransition()
   const router = useRouter()
 
