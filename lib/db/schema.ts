@@ -93,6 +93,7 @@ export const staff = pgTable("staff", {
   storeLatitude: numeric("storeLatitude", { precision: 10, scale: 7 }),
   storeLongitude: numeric("storeLongitude", { precision: 10, scale: 7 }),
   storeRadiusMeters: integer("storeRadiusMeters").notNull().default(100),
+  requireLocation: boolean("requireLocation").notNull().default(true),
   mustChangePassword: boolean("mustChangePassword").notNull().default(false),
   previousBalanceMinutes: integer("previousBalanceMinutes").notNull().default(0),
   active: boolean("active").notNull().default(true),

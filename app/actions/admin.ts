@@ -235,6 +235,7 @@ export async function updateStoreSettings(formData: FormData) {
     storeLatitude: parseCoordinate(formData.get("storeLatitude")),
     storeLongitude: parseCoordinate(formData.get("storeLongitude")),
     storeRadiusMeters: Math.min(1000, Math.max(10, Number(formData.get("storeRadiusMeters") ?? 100) || 100)),
+    requireLocation: formData.get("requireLocation") === "on",
   }
   await db.update(staff).set(values)
   revalidatePath("/admin")
