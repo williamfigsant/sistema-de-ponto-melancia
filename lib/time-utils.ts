@@ -263,11 +263,14 @@ export function aggregateDays(
     daysCompleted += 1
   }
 
+  const positiveAdjustment = Math.max(0, adjustmentMinutes)
+  const negativeAdjustment = Math.max(0, -adjustmentMinutes)
+
   return {
     totalWorked,
-    totalOvertime,
-    totalDeficit,
-    totalBalance: member.previousBalanceMinutes + adjustmentMinutes + totalOvertime - totalDeficit,
+    totalOvertime: totalOvertime + positiveAdjustment,
+    totalDeficit: totalDeficit + negativeAdjustment,
+    totalBalance: member.previousBalanceMinutes + totalOvertime - totalDeficit + adjustmentMinutes,
     daysCompleted,
   }
 }
