@@ -169,6 +169,28 @@ export async function createTimeAdjustment(formData: FormData) {
   revalidatePath(`/admin/colaborador/${staffId}`)
 }
 
+export async function updateTimeAdjustment(formData: FormData) {
+  await requireAdmin()
+  const id = String(formData.get("adjustmentId") ?? "")
+  const staffId = String(formData.get("staffId") ?? "")
+  const hours = Math.max(0, Number(formData.get("hours") ?? 0) || 0)
+  const minutes = Math.min(59, Math.max(0, Number(formData.get("minutes") ?? 0) || 0))
+  const direction = formData.get("direction") === "debit" ? -1 : 1
+  const description = String(formData.get("description") ?? "").trim()
+  if (!id || !staffId || !description || (hours === 0 && minutes === 0)) throw new Error("Informe horas, minutos e descrição.")
+  await db.update(timeAdjustments).set({ minutes: direction * (hours * 60 + minutes), description }).where(eq(timeAdjustments.id, id))
+  revalidatePath(`/admin/colaborador/${staffId}`)
+}
+
+export async function deleteTimeAdjustment(formData: FormData) {
+  await requireAdmin()
+  const id = String(formData.get("adjustmentId") ?? "")
+  const staffId = String(formData.get("staffId") ?? "")
+  if (!id || !staffId) throw new Error("Lançamento inválido.")
+  await db.delete(timeAdjustments).where(eq(timeAdjustments.id, id))
+  revalidatePath(`/admin/colaborador/${staffId}`)
+}
+
 export async function toggleEmployeeStatus(userId: string, active: boolean) {
   await requireAdmin()
   if (!userId) throw new Error("Colaborador inválido")
@@ -213,6 +235,7 @@ export async function updateStoreSettings(formData: FormData) {
     storeLatitude: parseCoordinate(formData.get("storeLatitude")),
     storeLongitude: parseCoordinate(formData.get("storeLongitude")),
     storeRadiusMeters: Math.min(1000, Math.max(10, Number(formData.get("storeRadiusMeters") ?? 100) || 100)),
+    requireLocation: formData.get("requireLocation") === "on",
   }
   await db.update(staff).set(values)
   revalidatePath("/admin")

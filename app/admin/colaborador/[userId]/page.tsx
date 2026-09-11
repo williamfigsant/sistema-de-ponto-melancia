@@ -4,6 +4,7 @@ import { AdminHistoryTable } from "@/components/admin/admin-history-table"
 import { MonthCalendar } from "@/components/admin/month-calendar"
 import { PrintReportButton } from "@/components/admin/print-report-button"
 import { MonthlyCalculationReport } from "@/components/admin/monthly-calculation-report"
+import { TimeAdjustmentsTable } from "@/components/admin/time-adjustments-table"
 import { AppHeader } from "@/components/app-header"
 import { SummaryCards } from "@/components/summary-cards"
 import { Badge } from "@/components/ui/badge"
@@ -15,7 +16,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import { getAdjustmentMinutes, getEntriesForUser, getStaffByUserId } from "@/lib/queries"
+import { getEntriesForUser, getStaffByUserId, getTimeAdjustments } from "@/lib/queries"
 import { requireAdmin } from "@/lib/session"
 import {
   aggregateDays,
@@ -51,10 +52,11 @@ export default async function ColaboradorPage({
   const selectedMonth = Math.min(12, Math.max(1, Number(search.mes) || current[1]))
   const sinceISO = `${selectedYear}-${String(selectedMonth).padStart(2, "0")}-01`
 
-  const [entries, adjustmentMinutes] = await Promise.all([
+  const [entries, adjustments] = await Promise.all([
     getEntriesForUser(member.userId, sinceISO),
-    getAdjustmentMinutes(member.id),
+    getTimeAdjustments(member.id),
   ])
+  const adjustmentMinutes = adjustments.reduce((total, adjustment) => total + adjustment.minutes, 0)
   const totals = aggregateDays(entries, member, adjustmentMinutes)
   const scheduled = scheduledMinutesForStaff(member)
   // "2024-01-06" é um sábado — usado só para calcular a carga de sábado.
@@ -92,6 +94,10 @@ export default async function ColaboradorPage({
         </Card>
 
         <MonthlyCalculationReport entries={entries} member={member} year={year} month={month} />
+        <Card className="print-hidden">
+          <CardHeader><CardTitle className="text-lg">Lançamentos avulsos</CardTitle><CardDescription>Revise, corrija ou exclua créditos e débitos manuais deste colaborador.</CardDescription></CardHeader>
+          <CardContent><TimeAdjustmentsTable adjustments={adjustments} staffId={member.id} /></CardContent>
+        </Card>
         <section className="print-sheet" aria-label="Folha de ponto para impressão">
           <h1 className="print-sheet-title">FOLHA DE PONTO | MÊS/ANO: {monthLabel}</h1>
           <div className="print-sheet-section-title">DADOS DO EMPREGADOR</div>
