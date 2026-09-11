@@ -36,7 +36,7 @@ export async function punch(type: PunchType, location?: Location) {
       return { error: "A localização da loja ainda não foi configurada. O administrador precisa informar latitude e longitude antes do registro." }
     }
     if (!location || !Number.isFinite(location.latitude) || !Number.isFinite(location.longitude)) return { error: "Ative a localização do dispositivo para registrar o ponto." }
-    if (!Number.isFinite(location.accuracy) || location.accuracy > 100) return { error: "A precisão do GPS está baixa. Tente novamente em um local com melhor sinal." }
+    if (!Number.isFinite(location.accuracy) || location.accuracy > 300) return { error: "A precisão do GPS está baixa. Tente novamente em um local com melhor sinal." }
     if (!Number.isFinite(radius) || radius < 10) return { error: "O raio permitido da loja está configurado incorretamente." }
     const distance = distanceInMeters(storeLatitude, storeLongitude, location.latitude, location.longitude)
     if (distance > radius) return { error: `Check-in bloqueado: você está a aproximadamente ${Math.round(distance)} m da loja. O limite é ${radius} m.` }
