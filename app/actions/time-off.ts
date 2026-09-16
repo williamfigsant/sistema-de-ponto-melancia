@@ -65,6 +65,11 @@ export async function deleteTimeOffRequest(formData: FormData) {
   return { success: true }
 }
 
+export async function deleteTimeOffRequestWithState(_state: { success?: boolean; error?: string }, formData: FormData) {
+  "use server"
+  return deleteTimeOffRequest(formData)
+}
+
 export async function updateTimeOffRequestWithState(_state: { success?: boolean; error?: string }, formData: FormData) {
   "use server"
   return updateTimeOffRequest(formData)

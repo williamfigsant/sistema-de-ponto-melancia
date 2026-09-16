@@ -1,5 +1,5 @@
 import type { TimeOffRequest } from "@/lib/db/schema"
-import { ReviewTimeOffForm, UpdateTimeOffForm } from "@/components/admin/time-off-request-actions"
+import { DeletePendingTimeOffForm, ReviewTimeOffForm, UpdateTimeOffForm } from "@/components/admin/time-off-request-actions"
 
 export function TimeOffRequestsCard({ requests }: { requests: Array<{ request: TimeOffRequest; memberName: string; memberUserId: string }> }) {
   return <section className="grid gap-4 rounded-xl border bg-card p-4">
@@ -9,7 +9,7 @@ export function TimeOffRequestsCard({ requests }: { requests: Array<{ request: T
         <div><p className="font-medium">{memberName} · {new Date(`${request.workDate}T12:00:00`).toLocaleDateString("pt-BR")}</p><p className="text-sm">{request.requestType === "full_day" ? "Folga do dia inteiro" : `${Math.floor(request.minutes / 60)}h ${request.minutes % 60}min de compensação`}</p><p className="text-sm text-muted-foreground">{request.reason}</p></div>
         <span className="rounded-full bg-muted px-2 py-1 text-xs">{request.status === "approved" ? "Aprovada" : request.status === "rejected" ? "Rejeitada" : "Aguardando confirmação"}</span>
       </div>
-      {request.status === "pending" && <div className="flex gap-2"><ReviewTimeOffForm requestId={request.id} status="rejected" /><ReviewTimeOffForm requestId={request.id} status="approved" /></div>}
+      {request.status === "pending" && <div className="flex flex-wrap gap-2"><ReviewTimeOffForm requestId={request.id} status="rejected" /><ReviewTimeOffForm requestId={request.id} status="approved" /><DeletePendingTimeOffForm requestId={request.id} /></div>}
       {request.status !== "pending" && <details><summary className="cursor-pointer text-sm font-medium">Editar solicitação</summary><UpdateTimeOffForm request={request} /></details>}
     </div>)}
   </section>
