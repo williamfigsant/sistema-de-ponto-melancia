@@ -5,11 +5,13 @@ export function SummaryCards({
   totalWorked,
   totalOvertime,
   totalDeficit,
+  totalUsedFromBank,
   daysCompleted,
 }: {
   totalWorked: number
   totalOvertime: number
   totalDeficit: number
+  totalUsedFromBank: number
   daysCompleted: number
 }) {
   const items = [
@@ -19,6 +21,11 @@ export function SummaryCards({
       label: "Horas extras",
       value: formatMinutes(totalOvertime),
       tone: "text-primary",
+    },
+    {
+      label: "Horas utilizadas do banco",
+      value: formatMinutes(totalUsedFromBank),
+      tone: "text-amber-500",
     },
     {
       label: "Horas em débito",
