@@ -48,6 +48,11 @@ export async function reviewTimeOffRequest(formData: FormData) {
   return { success: true }
 }
 
+export async function reviewTimeOffRequestWithState(_state: { success?: boolean; error?: string }, formData: FormData) {
+  "use server"
+  return reviewTimeOffRequest(formData)
+}
+
 export async function deleteTimeOffRequest(formData: FormData) {
   await requireAdmin()
   const id = String(formData.get("requestId") ?? "")
@@ -58,6 +63,11 @@ export async function deleteTimeOffRequest(formData: FormData) {
   revalidatePath("/admin")
   revalidatePath("/painel")
   return { success: true }
+}
+
+export async function updateTimeOffRequestWithState(_state: { success?: boolean; error?: string }, formData: FormData) {
+  "use server"
+  return updateTimeOffRequest(formData)
 }
 
 export async function cancelTimeOffRequest(formData: FormData) {
