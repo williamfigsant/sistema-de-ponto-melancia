@@ -42,7 +42,7 @@ export function TimeOffRequestForm() {
         {isOpen ? <ChevronUp className="size-5 shrink-0" aria-hidden="true" /> : <ChevronDown className="size-5 shrink-0" aria-hidden="true" />}
       </button>
       {isOpen && (
-        <form id="time-off-request-form" ref={formRef} action={submit} className="flex flex-col gap-4 border-t px-5 pb-5 pt-4 sm:px-6 sm:pb-6">
+        <form id="time-off-request-form" ref={formRef} onSubmit={(event) => { event.preventDefault(); void submit(new FormData(event.currentTarget)) }} className="flex flex-col gap-4 border-t px-5 pb-5 pt-4 sm:px-6 sm:pb-6">
           <div className="grid gap-2"><Label htmlFor="workDate">Data</Label><Input id="workDate" name="workDate" type="date" required /></div>
           <div className="grid gap-2"><Label>Tipo</Label><Select name="requestType" value={type} onValueChange={(value) => setType((value as keyof typeof requestTypeLabels) ?? "full_day")}><SelectTrigger className="w-full sm:w-72"><SelectValue>{requestTypeLabels[type]}</SelectValue></SelectTrigger><SelectContent><SelectItem value="full_day">Folga do dia inteiro</SelectItem><SelectItem value="partial">Horas compensatórias</SelectItem></SelectContent></Select></div>
           {type === "partial" && <div className="grid grid-cols-2 gap-3"><div className="grid gap-2"><Label htmlFor="hours">Horas</Label><Input id="hours" name="hours" type="number" min="0" /></div><div className="grid gap-2"><Label htmlFor="minutes">Minutos</Label><Input id="minutes" name="minutes" type="number" min="0" max="59" /></div></div>}
