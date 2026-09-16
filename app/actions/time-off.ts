@@ -16,7 +16,7 @@ export async function createTimeOffRequest(formData: FormData) {
   const hours = Math.max(0, Number(formData.get("hours") ?? 0) || 0)
   const minutes = Math.min(59, Math.max(0, Number(formData.get("minutes") ?? 0) || 0))
   const requestedMinutes = requestType === "full_day" ? 0 : hours * 60 + minutes
-  if (!/^\\d{4}-\\d{2}-\\d{2}$/.test(workDate) || !reason) return { error: "Informe a data e o motivo." }
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(workDate) || !reason) return { error: "Informe a data e o motivo." }
   if (requestType === "partial" && requestedMinutes <= 0) return { error: "Informe quantas horas serão compensadas." }
   await db.insert(timeOffRequests).values({ id: crypto.randomUUID(), staffId: member.id, requestedByUserId: member.userId, workDate, requestType, minutes: requestedMinutes, reason })
   revalidatePath("/painel")
