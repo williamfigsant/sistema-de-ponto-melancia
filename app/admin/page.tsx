@@ -12,7 +12,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import { getAdjustmentMinutes, getEntriesForUser, getPendingTimeOffRequests, getTimeAdjustments, listStaff } from "@/lib/queries"
+import { getEntriesForUser, getPendingTimeOffRequests, getTimeAdjustments, listStaff } from "@/lib/queries"
 import { requireAdmin } from "@/lib/session"
 import { aggregateDays, currentMonthStartISO } from "@/lib/time-utils"
 
@@ -34,11 +34,11 @@ export default async function AdminPage() {
 
   const sinceISO = currentMonthStartISO()
   const employeeSummaries = await Promise.all(activeEmployees.map(async (member) => {
-    const [entries, adjustmentMinutes] = await Promise.all([
+    const [entries, adjustments] = await Promise.all([
       getEntriesForUser(member.userId, sinceISO),
-      getAdjustmentMinutes(member.id),
+      getTimeAdjustments(member.id),
     ])
-    const agg = aggregateDays(entries, member, adjustmentMinutes)
+    const agg = aggregateDays(entries, member, adjustments)
     return { member, ...agg }
   }))
 

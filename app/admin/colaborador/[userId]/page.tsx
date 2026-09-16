@@ -56,8 +56,7 @@ export default async function ColaboradorPage({
     getEntriesForUser(member.userId, sinceISO),
     getTimeAdjustments(member.id),
   ])
-  const adjustmentMinutes = adjustments.reduce((total, adjustment) => total + adjustment.minutes, 0)
-  const totals = aggregateDays(entries, member, adjustmentMinutes)
+  const totals = aggregateDays(entries, member, adjustments)
   const scheduled = scheduledMinutesForStaff(member)
   // "2024-01-06" é um sábado — usado só para calcular a carga de sábado.
   const scheduledSaturday = scheduledMinutesForStaff(member, "2024-01-06")

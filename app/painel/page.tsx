@@ -11,7 +11,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import { getEntriesForUser, getEntryForDay, getTimeOffRequestsForUser } from "@/lib/queries"
+import { getEntriesForUser, getEntryForDay, getTimeAdjustments, getTimeOffRequestsForUser } from "@/lib/queries"
 import { getCurrentStaff } from "@/lib/session"
 import { aggregateDays, formatMinutes, scheduledMinutesForStaff, todayISO } from "@/lib/time-utils"
 import { redirect } from "next/navigation"
@@ -29,13 +29,14 @@ export default async function PainelPage() {
   since.setDate(since.getDate() - 30)
   const sinceISO = since.toISOString().slice(0, 10)
 
-  const [todayEntry, entries, timeOffRequests] = await Promise.all([
+  const [todayEntry, entries, adjustments, timeOffRequests] = await Promise.all([
     getEntryForDay(profile.userId, today),
     getEntriesForUser(profile.userId, sinceISO),
+    getTimeAdjustments(profile.id),
     getTimeOffRequestsForUser(profile.userId),
   ])
 
-  const totals = aggregateDays(entries, profile)
+  const totals = aggregateDays(entries, profile, adjustments)
   const scheduled = scheduledMinutesForStaff(profile)
   // "2024-01-06" é um sábado — usado só para calcular a carga de sábado.
   const scheduledSaturday = scheduledMinutesForStaff(profile, "2024-01-06")
@@ -44,7 +45,7 @@ export default async function PainelPage() {
     <div className="min-h-screen bg-secondary/30">
       <AppHeader userName={profile.name} roleLabel="Colaborador" />
 
-      <main className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-4 py-6">
+      <main className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-6">
         <div className="flex flex-col gap-1">
           <h1 className="font-display text-2xl font-semibold tracking-tight">
             Olá, {profile.name.split(" ")[0]}
