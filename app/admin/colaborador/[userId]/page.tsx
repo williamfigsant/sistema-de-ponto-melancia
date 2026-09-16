@@ -222,7 +222,7 @@ export default async function ColaboradorPage({
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <AdminHistoryTable entries={entries} member={member} />
+            <AdminHistoryTable entries={entries} adjustments={adjustments} member={member} />
           </CardContent>
         </Card>
 
