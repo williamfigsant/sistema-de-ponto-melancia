@@ -12,13 +12,13 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import { getEntriesForUser, getPendingTimeOffRequests, getTimeAdjustments, listStaff } from "@/lib/queries"
+import { getEntriesForUser, getTimeOffRequestsForAdmin, getTimeAdjustments, listStaff } from "@/lib/queries"
 import { requireAdmin } from "@/lib/session"
 import { aggregateDays, currentMonthStartISO } from "@/lib/time-utils"
 
 export default async function AdminPage() {
   const admin = await requireAdmin()
-  const [allStaff, pendingTimeOffRequests] = await Promise.all([listStaff(), getPendingTimeOffRequests()])
+  const [allStaff, timeOffRequests] = await Promise.all([listStaff(), getTimeOffRequestsForAdmin()])
   const employees = allStaff.filter((s) => s.role === "employee")
   const employeesWithAdjustments = await Promise.all(
     employees.map(async (member) => ({ ...member, adjustments: await getTimeAdjustments(member.id) })),
@@ -60,7 +60,7 @@ export default async function AdminPage() {
         </div>
 
         <EmployeeMonthlySummary rows={employeeSummaries} />
-        <TimeOffRequestsCard requests={pendingTimeOffRequests} />
+        <TimeOffRequestsCard requests={timeOffRequests} />
 
         <StoreSettingsCard values={storeValues} />
 

@@ -54,6 +54,13 @@ export async function getPendingTimeOffRequests() {
     .orderBy(timeOffRequests.workDate)
 }
 
+export async function getTimeOffRequestsForAdmin() {
+  return db.select({ request: timeOffRequests, memberName: staff.name, memberUserId: staff.userId })
+    .from(timeOffRequests)
+    .innerJoin(staff, eq(timeOffRequests.staffId, staff.id))
+    .orderBy(desc(timeOffRequests.createdAt))
+}
+
 export async function getEntryForDay(userId: string, workDate: string) {
   const rows = await db
     .select()
