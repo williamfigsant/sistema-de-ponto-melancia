@@ -197,11 +197,15 @@ export function calculateDay(entry: TimeEntry, member: Staff): DayCalculation {
   const intervaloPrevisto = previstoInicioAlmoco !== null && previstoFimAlmoco !== null ? Math.max(0, previstoFimAlmoco - previstoInicioAlmoco) : 0
   const intervaloDiferenca = lunchMinutes - intervaloPrevisto
   const intervaloStatus = !lunchStart || !lunchEnd ? "SEM_INTERVALO" as const : intervaloDiferenca < -5 ? "REDUZIDO" as const : intervaloDiferenca > 0 ? "SUPERIOR_AO_PREVISTO" as const : "REGULAR" as const
-  const alertas = intervaloStatus === "REDUZIDO" ? ["ALERTA_DE_INTERVALO_IRREGULAR"] : intervaloStatus === "SUPERIOR_AO_PREVISTO" ? ["INTERVALO_SUPERIOR_AO_PREVISTO"] : []
+  const isSaturday = isSaturdayISO(entry.workDate)
+  const alertas = [
+    ...(intervaloStatus === "REDUZIDO" ? ["ALERTA_DE_INTERVALO_IRREGULAR"] : intervaloStatus === "SUPERIOR_AO_PREVISTO" ? ["INTERVALO_SUPERIOR_AO_PREVISTO"] : []),
+    ...(isSaturday ? ["SABADO_JORNADA_NORMAL_4H"] : []),
+  ]
   const grossMinutes = Math.max(0, diffMinutes(clockIn, clockOut))
   const workedMinutes = Math.max(0, grossMinutes - lunchMinutes)
 
-  const scheduledMinutes = scheduledMinutesForStaff(member, entry.workDate)
+  const scheduledMinutes = isSaturday ? 4 * 60 : scheduledMinutesForStaff(member, entry.workDate)
   const occurrence = entry.occurrenceType ?? "normal"
   const complete = Boolean(clockIn && clockOut) || occurrence !== "normal"
   const absenceMinutes = occurrence === "unjustified_absence" || occurrence === "compensatory_day_off" ? scheduledMinutes : 0
