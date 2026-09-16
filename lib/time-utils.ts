@@ -259,21 +259,26 @@ export function aggregateDays(
   let totalOvertime = 0
   let totalDeficit = 0
   let daysCompleted = 0
+  let usedToCoverDailyDeficit = 0
 
   for (const entry of entries) {
     const calc = calculateDay(entry, member)
     if (!calc.complete) continue
+    const datedDebit = adjustments.filter((adjustment) => adjustment.workDate === entry.workDate && adjustment.minutes < 0).reduce((total, adjustment) => total + Math.abs(adjustment.minutes), 0)
+    const coveredDeficit = Math.min(calc.deficitMinutes, datedDebit)
     totalWorked += calc.workedMinutes
     totalOvertime += calc.overtimeMinutes
-    totalDeficit += calc.deficitMinutes
+    totalDeficit += calc.deficitMinutes - coveredDeficit
+    usedToCoverDailyDeficit += coveredDeficit
     daysCompleted += 1
   }
 
   const credits = adjustments.filter((adjustment) => adjustment.minutes > 0).reduce((total, adjustment) => total + adjustment.minutes, 0)
   const usedFromBank = adjustments.filter((adjustment) => adjustment.minutes < 0 && adjustment.workDate).reduce((total, adjustment) => total + Math.abs(adjustment.minutes), 0)
   const undatedDebits = adjustments.filter((adjustment) => adjustment.minutes < 0 && !adjustment.workDate).reduce((total, adjustment) => total + Math.abs(adjustment.minutes), 0)
-  const availableOvertime = Math.max(0, totalOvertime + credits - usedFromBank)
-  const totalAvailableBalance = member.previousBalanceMinutes + totalOvertime + credits - usedFromBank - totalDeficit - undatedDebits
+  const remainingBankUsage = Math.max(0, usedFromBank - usedToCoverDailyDeficit)
+  const availableOvertime = Math.max(0, member.previousBalanceMinutes + totalOvertime + credits - remainingBankUsage)
+  const totalAvailableBalance = availableOvertime - totalDeficit - undatedDebits
 
   return {
     totalWorked,

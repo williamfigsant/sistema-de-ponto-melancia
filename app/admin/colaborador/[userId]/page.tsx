@@ -93,7 +93,7 @@ export default async function ColaboradorPage({
           </CardContent>
         </Card>
 
-        <MonthlyCalculationReport entries={entries} member={member} year={year} month={month} />
+        <MonthlyCalculationReport entries={entries} adjustments={adjustments} member={member} year={year} month={month} />
         <Card className="print-hidden">
           <CardHeader><CardTitle className="text-lg">Lançamentos avulsos</CardTitle><CardDescription>Revise, corrija ou exclua créditos e débitos manuais deste colaborador.</CardDescription></CardHeader>
           <CardContent><TimeAdjustmentsTable adjustments={adjustments} staffId={member.id} /></CardContent>
