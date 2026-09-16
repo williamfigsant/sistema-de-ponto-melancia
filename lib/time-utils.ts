@@ -252,6 +252,7 @@ export function aggregateDays(
   totalOvertime: number
   totalDeficit: number
   totalBalance: number
+  totalUsedFromBank: number
   daysCompleted: number
 } {
   let totalWorked = 0
@@ -262,23 +263,24 @@ export function aggregateDays(
   for (const entry of entries) {
     const calc = calculateDay(entry, member)
     if (!calc.complete) continue
-    const datedAdjustment = adjustments.filter((adjustment) => adjustment.workDate === entry.workDate).reduce((total, adjustment) => total + adjustment.minutes, 0)
-    const adjustedBalance = calc.balanceMinutes + datedAdjustment
     totalWorked += calc.workedMinutes
-    totalOvertime += adjustedBalance > 0 ? adjustedBalance : 0
-    totalDeficit += adjustedBalance < 0 ? -adjustedBalance : 0
+    totalOvertime += calc.overtimeMinutes
+    totalDeficit += calc.deficitMinutes
     daysCompleted += 1
   }
 
-  const undatedAdjustment = adjustments.filter((adjustment) => !adjustment.workDate).reduce((total, adjustment) => total + adjustment.minutes, 0)
-  const positiveAdjustment = Math.max(0, undatedAdjustment)
-  const negativeAdjustment = Math.max(0, -undatedAdjustment)
+  const credits = adjustments.filter((adjustment) => adjustment.minutes > 0).reduce((total, adjustment) => total + adjustment.minutes, 0)
+  const usedFromBank = adjustments.filter((adjustment) => adjustment.minutes < 0 && adjustment.workDate).reduce((total, adjustment) => total + Math.abs(adjustment.minutes), 0)
+  const undatedDebits = adjustments.filter((adjustment) => adjustment.minutes < 0 && !adjustment.workDate).reduce((total, adjustment) => total + Math.abs(adjustment.minutes), 0)
+  const availableOvertime = Math.max(0, totalOvertime + credits - usedFromBank)
+  const totalAvailableBalance = member.previousBalanceMinutes + totalOvertime + credits - usedFromBank - totalDeficit - undatedDebits
 
   return {
     totalWorked,
-    totalOvertime: totalOvertime + positiveAdjustment,
-    totalDeficit: totalDeficit + negativeAdjustment,
-    totalBalance: member.previousBalanceMinutes + totalOvertime - totalDeficit + undatedAdjustment,
+    totalOvertime: availableOvertime,
+    totalDeficit: totalDeficit + undatedDebits,
+    totalBalance: totalAvailableBalance,
+    totalUsedFromBank: usedFromBank,
     daysCompleted,
   }
 }

@@ -196,8 +196,9 @@ export default async function ColaboradorPage({
           <SummaryCards
             totalWorked={totals.totalWorked}
             totalOvertime={totals.totalOvertime}
-            totalDeficit={totals.totalDeficit}
-            daysCompleted={totals.daysCompleted}
+  totalDeficit={totals.totalDeficit}
+  totalUsedFromBank={totals.totalUsedFromBank}
+  daysCompleted={totals.daysCompleted}
           />
         </div>
 
