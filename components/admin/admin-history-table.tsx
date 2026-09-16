@@ -56,7 +56,7 @@ export function AdminHistoryTable({
           <TableBody>
             {entries.map((entry) => {
               const calc = calculateDay(entry, member)
-              const dailyAdjustment = adjustments.filter((adjustment) => adjustment.workDate === entry.workDate).reduce((total, adjustment) => total + adjustment.minutes, 0)
+              const dailyAdjustment = adjustments.filter((adjustment) => adjustment.workDate === entry.workDate).reduce((total, adjustment) => total + Math.abs(adjustment.minutes), 0)
               const displayedBalance = calc.balanceMinutes + dailyAdjustment
               return (
                 <TableRow key={entry.id}>
