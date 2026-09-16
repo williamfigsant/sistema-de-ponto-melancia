@@ -204,7 +204,7 @@ export default async function ColaboradorPage({
 
         <Card className="print-hidden">
           <CardHeader><CardTitle className="text-lg">Calendário de registros</CardTitle><CardDescription>Clique em um dia para lançar ou editar o registro.</CardDescription></CardHeader>
-          <CardContent><MonthCalendar entries={entries} member={member} year={year} month={month} /></CardContent>
+          <CardContent><MonthCalendar entries={entries} adjustments={adjustments} member={member} year={year} month={month} /></CardContent>
         </Card>
 
         <Card className="print-hidden">
