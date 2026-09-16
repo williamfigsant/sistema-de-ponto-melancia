@@ -105,6 +105,7 @@ export const timeAdjustments = pgTable("timeAdjustments", {
   staffId: text("staffId").notNull(),
   minutes: integer("minutes").notNull(),
   description: text("description").notNull(),
+  workDate: date("workDate"),
   createdAt: timestamp("createdAt").notNull().defaultNow(),
 })
 
