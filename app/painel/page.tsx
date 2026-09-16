@@ -44,7 +44,7 @@ export default async function PainelPage() {
     <div className="min-h-screen bg-secondary/30">
       <AppHeader userName={profile.name} roleLabel="Colaborador" />
 
-      <main className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-4 py-6">
+      <main className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-6">
         <div className="flex flex-col gap-1">
           <h1 className="font-display text-2xl font-semibold tracking-tight">
             Olá, {profile.name.split(" ")[0]}
