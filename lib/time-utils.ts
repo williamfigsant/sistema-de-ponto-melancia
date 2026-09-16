@@ -90,7 +90,7 @@ export function calcularToleranciaArt58({
   return { variacoesPorMarcacao, totalVariacoes, minutosTolerados, minutosComputaveis, saldoFinal: podeTolerar ? saldoBruto - variacaoDaDuracao : saldoBruto }
 }
 
-export type OccurrenceType = "normal" | "holiday" | "justified_absence" | "unjustified_absence" | "medical_certificate" | "compensatory_day_off" | "early_departure" | "compensatory_early_departure"
+export type OccurrenceType = "normal" | "holiday" | "justified_absence" | "unjustified_absence" | "medical_certificate" | "compensatory_day_off" | "early_departure" | "compensatory_early_departure" | "compensatory_late_entry"
 
 export const occurrenceLabels: Record<OccurrenceType, string> = {
   normal: "",
@@ -101,6 +101,7 @@ export const occurrenceLabels: Record<OccurrenceType, string> = {
   compensatory_day_off: "Folga compensatória",
   early_departure: "Saída antecipada",
   compensatory_early_departure: "Saída antecipada compensatória",
+  compensatory_late_entry: "Entrada compensada",
 }
 
 export interface DayCalculation {
@@ -221,7 +222,7 @@ export function calculateDay(entry: TimeEntry, member: Staff): DayCalculation {
   const excedenteIntervalo = Math.max(0, intervaloDiferenca)
   const earlyDepartureMinutes = occurrence === "early_departure" || occurrence === "compensatory_early_departure" ? Math.max(0, scheduledMinutes - workedMinutes) : 0
   // workedMinutes já desconta o intervalo real. Não subtrair o excedente novamente.
-  const balanceMinutes = occurrence === "holiday" || occurrence === "justified_absence" ? 0 : occurrence === "unjustified_absence" || occurrence === "compensatory_day_off" ? -absenceMinutes : occurrence === "medical_certificate" ? creditedMinutes - scheduledMinutes : complete ? (tolerancia?.saldoFinal ?? saldoBruto) - earlyDepartureMinutes : 0
+  const balanceMinutes = occurrence === "holiday" || occurrence === "justified_absence" || occurrence === "compensatory_late_entry" ? 0 : occurrence === "unjustified_absence" || occurrence === "compensatory_day_off" ? -absenceMinutes : occurrence === "medical_certificate" ? creditedMinutes - scheduledMinutes : complete ? (tolerancia?.saldoFinal ?? saldoBruto) - earlyDepartureMinutes : 0
 
   return {
     workedMinutes,

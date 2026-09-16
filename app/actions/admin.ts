@@ -163,8 +163,9 @@ export async function createTimeAdjustment(formData: FormData) {
   const minutes = Math.min(59, Math.max(0, Number(formData.get("minutes") ?? 0) || 0))
   const direction = formData.get("direction") === "debit" ? -1 : 1
   const description = String(formData.get("description") ?? "").trim()
+  const workDate = String(formData.get("workDate") ?? "").trim() || null
   if (!staffId || !description || (hours === 0 && minutes === 0)) throw new Error("Informe horas, minutos e descrição.")
-  await db.insert(timeAdjustments).values({ id: crypto.randomUUID(), staffId, minutes: direction * (hours * 60 + minutes), description })
+  await db.insert(timeAdjustments).values({ id: crypto.randomUUID(), staffId, minutes: direction * (hours * 60 + minutes), description, workDate })
   revalidatePath("/admin")
   revalidatePath(`/admin/colaborador/${staffId}`)
 }
@@ -177,8 +178,9 @@ export async function updateTimeAdjustment(formData: FormData) {
   const minutes = Math.min(59, Math.max(0, Number(formData.get("minutes") ?? 0) || 0))
   const direction = formData.get("direction") === "debit" ? -1 : 1
   const description = String(formData.get("description") ?? "").trim()
+  const workDate = String(formData.get("workDate") ?? "").trim() || null
   if (!id || !staffId || !description || (hours === 0 && minutes === 0)) throw new Error("Informe horas, minutos e descrição.")
-  await db.update(timeAdjustments).set({ minutes: direction * (hours * 60 + minutes), description }).where(eq(timeAdjustments.id, id))
+  await db.update(timeAdjustments).set({ minutes: direction * (hours * 60 + minutes), description, workDate }).where(eq(timeAdjustments.id, id))
   revalidatePath(`/admin/colaborador/${staffId}`)
 }
 

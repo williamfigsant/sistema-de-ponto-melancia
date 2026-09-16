@@ -84,10 +84,11 @@ export default async function ColaboradorPage({
           <CardContent>
             <form action={createTimeAdjustment} className="grid gap-3 sm:grid-cols-[1fr_1fr_1fr_2fr_auto] sm:items-end">
               <input type="hidden" name="staffId" value={member.id} />
+                <label className="grid gap-1.5 text-sm"><span>Data do acerto</span><input name="workDate" type="date" className="h-9 rounded-md border bg-background px-3" /></label>
               <label className="grid gap-1 text-sm"><span>Horas</span><input className="h-9 rounded-md border bg-background px-3" name="hours" type="number" min="0" defaultValue="0" /></label>
               <label className="grid gap-1 text-sm"><span>Minutos</span><input className="h-9 rounded-md border bg-background px-3" name="minutes" type="number" min="0" max="59" defaultValue="0" /></label>
               <label className="grid gap-1 text-sm"><span>Tipo</span><select className="h-9 rounded-md border bg-background px-3" name="direction" defaultValue="credit"><option value="credit">Crédito</option><option value="debit">Débito</option></select></label>
-              <label className="grid gap-1 text-sm"><span>Descrição</span><input className="h-9 rounded-md border bg-background px-3" name="description" required placeholder="Ex.: saldo anterior" /></label>
+              <label className="grid gap-1 text-sm"><span>Descrição / motivo</span><input className="h-9 rounded-md border bg-background px-3" name="description" required placeholder="Ex.: 2h usadas em entrada compensada" /></label>
               <Button type="submit">Lançar</Button>
             </form>
           </CardContent>
