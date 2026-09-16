@@ -121,6 +121,7 @@ export function AdminHistoryTable({
           employeeUserId={member.userId}
           workDate={editing.workDate}
           entry={editing.entry}
+          adjustments={adjustments.filter((adjustment) => adjustment.workDate === editing.workDate)}
           open={Boolean(editing)}
           onOpenChange={(o) => !o && setEditing(null)}
         />

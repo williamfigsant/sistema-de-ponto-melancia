@@ -15,8 +15,8 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import type { TimeEntry } from "@/lib/db/schema"
-import { toTimeInputValue } from "@/lib/time-utils"
+import type { TimeAdjustment, TimeEntry } from "@/lib/db/schema"
+import { formatMinutes, toTimeInputValue } from "@/lib/time-utils"
 import { useRouter } from "next/navigation"
 import { useTransition } from "react"
 import { toast } from "sonner"
@@ -25,12 +25,14 @@ export function EditEntryDialog({
   employeeUserId,
   workDate,
   entry,
+  adjustments,
   open,
   onOpenChange,
 }: {
   employeeUserId: string
   workDate: string
   entry: TimeEntry | null
+  adjustments: TimeAdjustment[]
   open: boolean
   onOpenChange: (open: boolean) => void
 }) {
@@ -128,6 +130,25 @@ export function EditEntryDialog({
           </div>
 
           <div className="grid gap-1.5 pb-4"><Label htmlFor="editOccurrenceNote">Observação / horas abonadas</Label><Input id="editOccurrenceNote" name="occurrenceNote" defaultValue={entry?.occurrenceNote ?? ""} placeholder="Ex.: comparecimento médico — 2h abonadas" /></div>
+
+          {adjustments.length > 0 && (
+            <section className="mb-4 rounded-lg border border-border bg-muted/30 p-3" aria-labelledby="daily-adjustments-title">
+              <h3 id="daily-adjustments-title" className="text-sm font-medium">Lançamentos extras do dia</h3>
+              <div className="mt-2 grid gap-2">
+                {adjustments.map((adjustment) => (
+                  <div key={adjustment.id} className="flex items-start justify-between gap-3 rounded-md border border-border/70 bg-background px-3 py-2 text-sm">
+                    <div className="min-w-0">
+                      <p className={adjustment.minutes < 0 ? "font-medium text-destructive" : "font-medium text-primary"}>
+                        {adjustment.minutes < 0 ? "Débito" : "Crédito"}: {formatMinutes(Math.abs(adjustment.minutes))}
+                      </p>
+                      <p className="truncate text-xs text-muted-foreground">{adjustment.description || "Sem descrição"}</p>
+                    </div>
+                    <span className="shrink-0 text-xs text-muted-foreground">Acerto manual</span>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
 
           <DialogFooter>
             <Button type="submit" disabled={isPending} className="w-full">
