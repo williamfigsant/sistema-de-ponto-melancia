@@ -1,7 +1,7 @@
 import "server-only"
 
 import { db } from "@/lib/db"
-import { staff, timeAdjustments, timeEntries, user } from "@/lib/db/schema"
+import { staff, timeAdjustments, timeEntries, timeOffRequests, user } from "@/lib/db/schema"
 import { and, desc, eq, gte, getTableColumns } from "drizzle-orm"
 
 /** Todos os colaboradores (uso admin). */
@@ -38,6 +38,20 @@ export async function getEntriesForUser(userId: string, sinceISO: string) {
 }
 
 /** Registro de um dia específico. */
+export async function getTimeOffRequestsForUser(userId: string) {
+  const member = await getStaffByUserId(userId)
+  if (!member) return []
+  return db.select().from(timeOffRequests).where(eq(timeOffRequests.staffId, member.id)).orderBy(desc(timeOffRequests.workDate), desc(timeOffRequests.createdAt))
+}
+
+export async function getPendingTimeOffRequests() {
+  return db.select({ request: timeOffRequests, memberName: staff.name, memberUserId: staff.userId })
+    .from(timeOffRequests)
+    .innerJoin(staff, eq(timeOffRequests.staffId, staff.id))
+    .where(eq(timeOffRequests.status, "pending"))
+    .orderBy(timeOffRequests.workDate)
+}
+
 export async function getEntryForDay(userId: string, workDate: string) {
   const rows = await db
     .select()

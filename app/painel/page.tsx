@@ -1,4 +1,6 @@
 import { AppHeader } from "@/components/app-header"
+import { TimeOffRequestForm } from "@/components/time-off-request-form"
+import { TimeOffRequestList } from "@/components/time-off-request-list"
 import { HistoryTable } from "@/components/history-table"
 import { PunchClock } from "@/components/punch-clock"
 import { SummaryCards } from "@/components/summary-cards"
@@ -9,7 +11,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import { getEntriesForUser, getEntryForDay } from "@/lib/queries"
+import { getEntriesForUser, getEntryForDay, getTimeOffRequestsForUser } from "@/lib/queries"
 import { getCurrentStaff } from "@/lib/session"
 import { aggregateDays, formatMinutes, scheduledMinutesForStaff, todayISO } from "@/lib/time-utils"
 import { redirect } from "next/navigation"
@@ -27,9 +29,10 @@ export default async function PainelPage() {
   since.setDate(since.getDate() - 30)
   const sinceISO = since.toISOString().slice(0, 10)
 
-  const [todayEntry, entries] = await Promise.all([
+  const [todayEntry, entries, timeOffRequests] = await Promise.all([
     getEntryForDay(profile.userId, today),
     getEntriesForUser(profile.userId, sinceISO),
+    getTimeOffRequestsForUser(profile.userId),
   ])
 
   const totals = aggregateDays(entries, profile)
@@ -60,6 +63,8 @@ export default async function PainelPage() {
         </div>
 
         <PunchClock entry={todayEntry} />
+        <TimeOffRequestForm />
+        <TimeOffRequestList requests={timeOffRequests} />
 
         <SummaryCards
           totalWorked={totals.totalWorked}

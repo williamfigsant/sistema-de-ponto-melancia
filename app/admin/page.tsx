@@ -3,6 +3,7 @@ import { CreateEmployeeDialog } from "@/components/admin/create-employee-dialog"
 import { EmployeeList } from "@/components/admin/employee-list"
 import { AppHeader } from "@/components/app-header"
 import { EmployeeMonthlySummary } from "@/components/admin/employee-monthly-summary"
+import { TimeOffRequestsCard } from "@/components/admin/time-off-requests-card"
 import { StoreSettingsCard } from "@/components/admin/store-settings-card"
 import {
   Card,
@@ -11,13 +12,13 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import { getAdjustmentMinutes, getEntriesForUser, getTimeAdjustments, listStaff } from "@/lib/queries"
+import { getAdjustmentMinutes, getEntriesForUser, getPendingTimeOffRequests, getTimeAdjustments, listStaff } from "@/lib/queries"
 import { requireAdmin } from "@/lib/session"
 import { aggregateDays, currentMonthStartISO } from "@/lib/time-utils"
 
 export default async function AdminPage() {
   const admin = await requireAdmin()
-  const allStaff = await listStaff()
+  const [allStaff, pendingTimeOffRequests] = await Promise.all([listStaff(), getPendingTimeOffRequests()])
   const employees = allStaff.filter((s) => s.role === "employee")
   const employeesWithAdjustments = await Promise.all(
     employees.map(async (member) => ({ ...member, adjustments: await getTimeAdjustments(member.id) })),
@@ -59,6 +60,7 @@ export default async function AdminPage() {
         </div>
 
         <EmployeeMonthlySummary rows={employeeSummaries} />
+        <TimeOffRequestsCard requests={pendingTimeOffRequests} />
 
         <StoreSettingsCard values={storeValues} />
 
