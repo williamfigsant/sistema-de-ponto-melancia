@@ -12,7 +12,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import type { Staff, TimeEntry } from "@/lib/db/schema"
+import type { Staff, TimeAdjustment, TimeEntry } from "@/lib/db/schema"
 import { calculateDay, formatDateBR, formatMinutes, formatTime } from "@/lib/time-utils"
 import { Pencil, Trash2 } from "lucide-react"
 import { useTransition } from "react"
@@ -20,9 +20,11 @@ import { useState } from "react"
 
 export function AdminHistoryTable({
   entries,
+  adjustments,
   member,
 }: {
   entries: TimeEntry[]
+  adjustments: TimeAdjustment[]
   member: Staff
 }) {
   const [editing, setEditing] = useState<{ workDate: string; entry: TimeEntry | null } | null>(null)
@@ -54,6 +56,8 @@ export function AdminHistoryTable({
           <TableBody>
             {entries.map((entry) => {
               const calc = calculateDay(entry, member)
+              const dailyAdjustment = adjustments.filter((adjustment) => adjustment.workDate === entry.workDate).reduce((total, adjustment) => total + adjustment.minutes, 0)
+              const displayedBalance = calc.balanceMinutes + dailyAdjustment
               return (
                 <TableRow key={entry.id}>
                   <TableCell className="font-medium">
@@ -78,14 +82,14 @@ export function AdminHistoryTable({
                     {calc.complete ? (
                       <span
                         className={
-                          calc.balanceMinutes > 0
+                          displayedBalance > 0
                             ? "font-medium text-primary"
-                            : calc.balanceMinutes < 0
+                            : displayedBalance < 0
                               ? "font-medium text-destructive"
                               : "text-muted-foreground"
                         }
                       >
-                        {formatMinutes(calc.balanceMinutes, true)}
+                        {formatMinutes(displayedBalance, true)}
                       </span>
                     ) : (
                       "--"

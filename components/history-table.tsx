@@ -7,14 +7,16 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import type { Staff, TimeEntry } from "@/lib/db/schema"
+import type { Staff, TimeAdjustment, TimeEntry } from "@/lib/db/schema"
 import { calculateDay, formatDateBR, formatMinutes, formatTime } from "@/lib/time-utils"
 
 export function HistoryTable({
   entries,
+  adjustments,
   member,
 }: {
   entries: TimeEntry[]
+  adjustments: TimeAdjustment[]
   member: Staff
 }) {
   if (entries.length === 0) {
@@ -41,6 +43,8 @@ export function HistoryTable({
         <TableBody>
           {entries.map((entry) => {
             const calc = calculateDay(entry, member)
+            const dailyAdjustment = adjustments.filter((adjustment) => adjustment.workDate === entry.workDate).reduce((total, adjustment) => total + adjustment.minutes, 0)
+            const displayedBalance = calc.balanceMinutes + dailyAdjustment
             return (
               <TableRow key={entry.id}>
                 <TableCell className="font-medium">
@@ -65,14 +69,14 @@ export function HistoryTable({
                   {calc.complete ? (
                     <span
                       className={
-                        calc.balanceMinutes > 0
+                        displayedBalance > 0
                           ? "font-medium text-primary"
-                          : calc.balanceMinutes < 0
+                          : displayedBalance < 0
                             ? "font-medium text-destructive"
                             : "text-muted-foreground"
                       }
                     >
-                      {formatMinutes(calc.balanceMinutes, true)}
+                      {formatMinutes(displayedBalance, true)}
                     </span>
                   ) : (
                     "--"

@@ -84,7 +84,7 @@ export default async function PainelPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <HistoryTable entries={entries} member={profile} />
+            <HistoryTable entries={entries} adjustments={adjustments} member={profile} />
           </CardContent>
         </Card>
       </main>
