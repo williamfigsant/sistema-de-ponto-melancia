@@ -109,6 +109,22 @@ export const timeAdjustments = pgTable("timeAdjustments", {
 })
 
 // Registro de ponto diário (um por colaborador por dia).
+export const timeOffRequests = pgTable("time_off_requests", {
+  id: text("id").primaryKey(),
+  staffId: integer("staffId").notNull(),
+  requestedByUserId: text("requestedByUserId").notNull(),
+  workDate: date("workDate").notNull(),
+  requestType: text("requestType").notNull().default("full_day"),
+  minutes: integer("minutes").notNull(),
+  reason: text("reason").notNull(),
+  status: text("status").notNull().default("pending"),
+  reviewNote: text("reviewNote"),
+  reviewedByUserId: text("reviewedByUserId"),
+  reviewedAt: timestamp("reviewedAt"),
+  createdAt: timestamp("createdAt").notNull().defaultNow(),
+  updatedAt: timestamp("updatedAt").notNull().defaultNow(),
+})
+
 export const timeEntries = pgTable(
   "time_entries",
   {
@@ -132,3 +148,4 @@ export const timeEntries = pgTable(
 export type Staff = typeof staff.$inferSelect
 export type TimeAdjustment = typeof timeAdjustments.$inferSelect
 export type TimeEntry = typeof timeEntries.$inferSelect
+export type TimeOffRequest = typeof timeOffRequests.$inferSelect
