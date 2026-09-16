@@ -37,7 +37,7 @@ export async function reviewTimeOffRequest(formData: FormData) {
     minutes = member ? scheduledMinutesForStaff(member, request.workDate) : 0
   }
   await db.update(timeOffRequests).set({ status, minutes, reviewNote, reviewedByUserId: admin.userId, reviewedAt: new Date(), updatedAt: new Date() }).where(eq(timeOffRequests.id, id))
-  if (status === "approved" && minutes > 0) await db.insert(timeAdjustments).values({ id: `time-off-${request.id}`, staffId: String(request.staffId), minutes: -minutes, description: `Compensação aprovada em ${request.workDate}: ${request.reason}` })
+  if (status === "approved" && minutes > 0) await db.insert(timeAdjustments).values({ id: `time-off-${request.id}`, staffId: String(request.staffId), minutes: -minutes, workDate: request.workDate, description: `Compensação aprovada em ${request.workDate}: ${request.reason}` })
   revalidatePath("/admin")
   revalidatePath("/painel")
   return { success: true }

@@ -182,6 +182,7 @@ export async function updateTimeAdjustment(formData: FormData) {
   if (!id || !staffId || !description || (hours === 0 && minutes === 0)) throw new Error("Informe horas, minutos e descrição.")
   await db.update(timeAdjustments).set({ minutes: direction * (hours * 60 + minutes), description, workDate }).where(eq(timeAdjustments.id, id))
   revalidatePath(`/admin/colaborador/${staffId}`)
+  revalidatePath("/admin")
 }
 
 export async function deleteTimeAdjustment(formData: FormData) {

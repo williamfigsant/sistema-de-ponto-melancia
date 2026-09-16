@@ -246,7 +246,7 @@ export function calculateDay(entry: TimeEntry, member: Staff): DayCalculation {
 export function aggregateDays(
   entries: TimeEntry[],
   member: Staff,
-  adjustmentMinutes = 0,
+  adjustments: { minutes: number; workDate: string | null }[] = [],
 ): {
   totalWorked: number
   totalOvertime: number
@@ -262,20 +262,23 @@ export function aggregateDays(
   for (const entry of entries) {
     const calc = calculateDay(entry, member)
     if (!calc.complete) continue
+    const datedAdjustment = adjustments.filter((adjustment) => adjustment.workDate === entry.workDate).reduce((total, adjustment) => total + adjustment.minutes, 0)
+    const adjustedBalance = calc.balanceMinutes + datedAdjustment
     totalWorked += calc.workedMinutes
-    totalOvertime += calc.overtimeMinutes
-    totalDeficit += calc.deficitMinutes
+    totalOvertime += adjustedBalance > 0 ? adjustedBalance : 0
+    totalDeficit += adjustedBalance < 0 ? -adjustedBalance : 0
     daysCompleted += 1
   }
 
-  const positiveAdjustment = Math.max(0, adjustmentMinutes)
-  const negativeAdjustment = Math.max(0, -adjustmentMinutes)
+  const undatedAdjustment = adjustments.filter((adjustment) => !adjustment.workDate).reduce((total, adjustment) => total + adjustment.minutes, 0)
+  const positiveAdjustment = Math.max(0, undatedAdjustment)
+  const negativeAdjustment = Math.max(0, -undatedAdjustment)
 
   return {
     totalWorked,
     totalOvertime: totalOvertime + positiveAdjustment,
     totalDeficit: totalDeficit + negativeAdjustment,
-    totalBalance: member.previousBalanceMinutes + totalOvertime - totalDeficit + adjustmentMinutes,
+    totalBalance: member.previousBalanceMinutes + totalOvertime - totalDeficit + undatedAdjustment,
     daysCompleted,
   }
 }
