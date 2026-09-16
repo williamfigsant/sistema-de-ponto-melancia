@@ -5,6 +5,7 @@ import { db } from "@/lib/db"
 import { staff } from "@/lib/db/schema"
 import { eq } from "drizzle-orm"
 import { headers } from "next/headers"
+import { redirect } from "next/navigation"
 
 export async function getSession() {
   return auth.api.getSession({ headers: await headers() })
@@ -28,11 +29,19 @@ export async function getCurrentStaff() {
   return rows[0] ?? null
 }
 
-/** Garante que o usuário logado é admin, senão lança erro. */
+/** Garante que o usuário logado é admin e redireciona acessos inválidos. */
 export async function requireAdmin() {
-  const profile = await getCurrentStaff()
-  if (!profile || profile.role !== "admin") {
-    throw new Error("Forbidden")
-  }
+  const session = await getSession()
+  if (!session?.user) redirect("/sign-in?error=session")
+
+  const rows = await db
+    .select()
+    .from(staff)
+    .where(eq(staff.userId, session.user.id))
+    .limit(1)
+  const profile = rows[0] ?? null
+
+  if (!profile) redirect("/sign-in?error=profile")
+  if (profile.role !== "admin") redirect("/painel?error=admin-only")
   return profile
 }
