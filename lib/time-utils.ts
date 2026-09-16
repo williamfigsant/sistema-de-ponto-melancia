@@ -259,8 +259,6 @@ export function aggregateDays(
   let totalOvertime = 0
   let totalDeficit = 0
   let daysCompleted = 0
-  let usedToCoverDailyDeficit = 0
-
   for (const entry of entries) {
     const calc = calculateDay(entry, member)
     if (!calc.complete) continue
@@ -269,15 +267,13 @@ export function aggregateDays(
     totalWorked += calc.workedMinutes
     totalOvertime += calc.overtimeMinutes
     totalDeficit += calc.deficitMinutes - coveredDeficit
-    usedToCoverDailyDeficit += coveredDeficit
     daysCompleted += 1
   }
 
   const credits = adjustments.filter((adjustment) => adjustment.minutes > 0).reduce((total, adjustment) => total + adjustment.minutes, 0)
   const usedFromBank = adjustments.filter((adjustment) => adjustment.minutes < 0 && adjustment.workDate).reduce((total, adjustment) => total + Math.abs(adjustment.minutes), 0)
   const undatedDebits = adjustments.filter((adjustment) => adjustment.minutes < 0 && !adjustment.workDate).reduce((total, adjustment) => total + Math.abs(adjustment.minutes), 0)
-  const remainingBankUsage = Math.max(0, usedFromBank - usedToCoverDailyDeficit)
-  const availableOvertime = Math.max(0, member.previousBalanceMinutes + totalOvertime + credits - remainingBankUsage)
+  const availableOvertime = Math.max(0, member.previousBalanceMinutes + totalOvertime + credits - usedFromBank)
   const totalAvailableBalance = availableOvertime - totalDeficit - undatedDebits
 
   return {
