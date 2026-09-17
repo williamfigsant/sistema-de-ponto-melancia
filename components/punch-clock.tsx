@@ -29,8 +29,9 @@ export function PunchClock({ entry }: { entry: TimeEntry | null }) {
   const [locationStatus, setLocationStatus] = useState<"idle" | "loading" | "ready" | "error">("idle")
 
   useEffect(() => {
-    setNow(new Date())
-    const id = setInterval(() => setNow(new Date()), 1000)
+    const updateNow = () => setNow(new Date())
+    updateNow()
+    const id = setInterval(updateNow, 1000)
     return () => clearInterval(id)
   }, [])
 

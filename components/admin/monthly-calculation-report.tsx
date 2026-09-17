@@ -4,7 +4,8 @@ import { calculateDay, formatDateBR, formatMinutes, formatTime } from "@/lib/tim
 export function MonthlyCalculationReport({ entries, adjustments, member, year, month, emittedAt }: { entries: TimeEntry[]; adjustments: TimeAdjustment[]; member: Staff; year: number; month: number; emittedAt: string }) {
   const daysInMonth = new Date(Date.UTC(year, month, 0)).getUTCDate()
   const byDate = new Map(entries.map((entry) => [entry.workDate, entry]))
-  const label = new Intl.DateTimeFormat("pt-BR", { month: "long", year: "numeric", timeZone: "America/Sao_Paulo" }).format(new Date(Date.UTC(year, month - 1, 1, 12)))
+  const monthNames = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"]
+  const label = `${monthNames[month - 1] ?? ""} de ${year}`
   const rows = Array.from({ length: daysInMonth }, (_, index) => {
     const date = `${year}-${String(month).padStart(2, "0")}-${String(index + 1).padStart(2, "0")}`
     const entry = byDate.get(date)
