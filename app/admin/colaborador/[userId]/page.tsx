@@ -51,6 +51,7 @@ export default async function ColaboradorPage({
   const selectedYear = Number(search.ano) || current[0]
   const selectedMonth = Math.min(12, Math.max(1, Number(search.mes) || current[1]))
   const sinceISO = `${selectedYear}-${String(selectedMonth).padStart(2, "0")}-01`
+  const emittedAt = nowBR()
 
   const [entries, adjustments] = await Promise.all([
     getEntriesForUser(member.userId, sinceISO),
@@ -93,7 +94,7 @@ export default async function ColaboradorPage({
           </CardContent>
         </Card>
 
-        <MonthlyCalculationReport entries={entries} adjustments={adjustments} member={member} year={year} month={month} />
+        <MonthlyCalculationReport entries={entries} adjustments={adjustments} member={member} year={year} month={month} emittedAt={emittedAt} />
         <Card className="print-hidden">
           <CardHeader><CardTitle className="text-lg">Lançamentos avulsos</CardTitle><CardDescription>Revise, corrija ou exclua créditos e débitos manuais deste colaborador.</CardDescription></CardHeader>
           <CardContent><TimeAdjustmentsTable adjustments={adjustments} staffId={member.id} /></CardContent>
@@ -125,7 +126,7 @@ export default async function ColaboradorPage({
             })}</tbody>
           </table>
           <div className="print-sheet-signature"><b>Assinatura do empregado:</b><span /></div>
-          <div className="print-sheet-footer"><b>Legenda:</b> FER = Feriado · FJ = Falta justificada · FI = Falta injustificada · AT = Atestado · FC = Folga compensatória · SA = Saída antecipada · SAC = Saída antecipada compensatória<br />Documento emitido em {nowBR()} · Fuso horário: Maricá/RJ (America/Sao_Paulo)</div>
+          <div className="print-sheet-footer"><b>Legenda:</b> FER = Feriado · FJ = Falta justificada · FI = Falta injustificada · AT = Atestado · FC = Folga compensatória · SA = Saída antecipada · SAC = Saída antecipada compensatória<br />Documento emitido em {emittedAt} · Fuso horário: Maricá/RJ (America/Sao_Paulo)</div>
         </section>
         <div className="hidden print:flex print:items-center print:justify-between print:border-b print:border-foreground/20 print:pb-3">
           <div className="flex items-center gap-3">
@@ -138,7 +139,7 @@ export default async function ColaboradorPage({
           <div className="text-right text-xs leading-5">
             <p><span className="font-semibold">Colaborador:</span> {member.name}</p>
             <p><span className="font-semibold">Referência:</span> {formatDateBR(sinceISO).slice(3)}</p>
-            <p><span className="font-semibold">Emitido em:</span> {nowBR()}</p>
+            <p><span className="font-semibold">Emitido em:</span> {emittedAt}</p>
           </div>
         </div>
 

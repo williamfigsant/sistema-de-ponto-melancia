@@ -15,7 +15,7 @@ export function TimeOffRequestsCard({ requests }: { requests: Array<{ request: T
         <span className="rounded-full bg-muted px-2 py-1 text-xs">{request.status === "approved" ? "Aprovada" : request.status === "rejected" ? "Rejeitada" : "Aguardando confirmação"}</span>
       </div>
       {request.status === "pending" && <div className="flex flex-wrap gap-2"><ReviewTimeOffForm requestId={request.id} status="rejected" /><ReviewTimeOffForm requestId={request.id} status="approved" /><DeletePendingTimeOffForm requestId={request.id} /></div>}
-      {request.status !== "pending" && <details><summary className="cursor-pointer text-sm font-medium">Editar solicitação</summary><UpdateTimeOffForm request={request} /></details>}
+      {request.status !== "pending" && <><details><summary className="cursor-pointer text-sm font-medium">Editar solicitação</summary><UpdateTimeOffForm request={request} /></details><DeletePendingTimeOffForm requestId={request.id} /></>}
     </div>)}
   </section>
 }
