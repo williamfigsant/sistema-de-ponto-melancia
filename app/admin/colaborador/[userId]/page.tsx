@@ -59,7 +59,7 @@ export default async function ColaboradorPage({
     getTimeOffRequestsForUser(member.userId),
   ])
   const monthlyTimeOffRequests = timeOffRequests.filter((request) => request.workDate.startsWith(`${selectedYear}-${String(selectedMonth).padStart(2, "0")}`))
-  const timeOffByDate = new Map(monthlyTimeOffRequests.map((request) => [request.workDate, request]))
+  const timeOffByDate = new Map(monthlyTimeOffRequests.filter((request) => request.status === "approved").map((request) => [request.workDate, request]))
   const totals = aggregateDays(entries, member, adjustments)
   const scheduled = scheduledMinutesForStaff(member)
   // "2024-01-06" é um sábado — usado só para calcular a carga de sábado.
@@ -127,8 +127,11 @@ export default async function ColaboradorPage({
               const timeOff = timeOffByDate.get(date)
               const calc = entry ? calculateDay(entry, member) : null
               const occurrence = timeOff ? (timeOff.requestType === "full_day" ? "FC" : "HC") : entry ? occurrenceCodes[entry.occurrenceType] ?? "" : ""
-              const note = timeOff ? (timeOff.requestType === "full_day" ? "Folga" : "Horas compensatórias") : ""
-              return <tr key={date}><td>{String(day).padStart(2, "0")}</td><td>{timeOff ? "—" : formatTime(entry?.clockIn)}</td><td>{timeOff ? "—" : formatTime(entry?.lunchStart)}</td><td>{timeOff ? "—" : formatTime(entry?.lunchEnd)}</td><td>{timeOff ? "—" : formatTime(entry?.clockOut)}</td><td>{occurrence}{note && <small className="print-sheet-note"> {note}</small>}</td><td>{calc?.complete && (calc.balanceMinutes ?? 0) > 0 ? formatMinutes(calc.balanceMinutes ?? 0) : calc && (calc.balanceMinutes ?? 0) < 0 ? `-${formatMinutes(Math.abs(calc.balanceMinutes ?? 0))}` : timeOff?.status === "approved" ? "Compensada" : ""}</td><td></td></tr>
+              const weekday = new Date(`${date}T12:00:00Z`).getUTCDay()
+              const dayLabel = weekday === 0 ? "Domingo" : ""
+              const occurrenceLabels: Record<string, string> = { holiday: "Feriado", justified_absence: "Falta justificada", medical_certificate: "Atestado", early_departure: "Saída antecipada", compensatory_early_departure: "Saída antecipada para compensar horas extras", compensatory_leave: "Folga compensatória", day_off: "Folga" }
+              const note = timeOff ? (timeOff.requestType === "full_day" ? "Folga" : "Horas compensatórias") : dayLabel || occurrenceLabels[entry?.occurrenceType ?? ""] || ""
+              return <tr key={date}><td>{String(day).padStart(2, "0")}</td><td>{timeOff ? "—" : formatTime(entry?.clockIn)}</td><td>{timeOff ? "—" : formatTime(entry?.lunchStart)}</td><td>{timeOff ? "—" : formatTime(entry?.lunchEnd)}</td><td>{timeOff ? "—" : formatTime(entry?.clockOut)}</td><td>{dayLabel && <small className="print-sheet-note">{dayLabel}</small>}{occurrence}{note && <small className="print-sheet-note">{note}</small>}</td><td>{calc?.complete && (calc.balanceMinutes ?? 0) > 0 ? formatMinutes(calc.balanceMinutes ?? 0) : calc && (calc.balanceMinutes ?? 0) < 0 ? `-${formatMinutes(Math.abs(calc.balanceMinutes ?? 0))}` : timeOff?.status === "approved" ? "Compensada" : ""}</td><td></td></tr>
             })}</tbody>
           </table>
           <div className="print-sheet-signature"><b>Assinatura do empregado:</b><span /></div>
