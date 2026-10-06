@@ -16,7 +16,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import { getEntriesForUser, getStaffByUserId, getTimeAdjustments } from "@/lib/queries"
+import { getEntriesForUser, getStaffByUserId, getTimeAdjustments, getTimeOffRequestsForUser } from "@/lib/queries"
 import { requireAdmin } from "@/lib/session"
 import {
   aggregateDays,
@@ -53,10 +53,13 @@ export default async function ColaboradorPage({
   const sinceISO = `${selectedYear}-${String(selectedMonth).padStart(2, "0")}-01`
   const emittedAt = nowBR()
 
-  const [entries, adjustments] = await Promise.all([
+  const [entries, adjustments, timeOffRequests] = await Promise.all([
     getEntriesForUser(member.userId, sinceISO),
     getTimeAdjustments(member.id),
+    getTimeOffRequestsForUser(member.userId),
   ])
+  const monthlyTimeOffRequests = timeOffRequests.filter((request) => request.workDate.startsWith(`${selectedYear}-${String(selectedMonth).padStart(2, "0")}`))
+  const timeOffByDate = new Map(monthlyTimeOffRequests.map((request) => [request.workDate, request]))
   const totals = aggregateDays(entries, member, adjustments)
   const scheduled = scheduledMinutesForStaff(member)
   // "2024-01-06" é um sábado — usado só para calcular a carga de sábado.
@@ -94,7 +97,7 @@ export default async function ColaboradorPage({
           </CardContent>
         </Card>
 
-        <MonthlyCalculationReport entries={entries} adjustments={adjustments} member={member} year={year} month={month} emittedAt={emittedAt} />
+        <MonthlyCalculationReport entries={entries} adjustments={adjustments} timeOffRequests={monthlyTimeOffRequests} member={member} year={year} month={month} emittedAt={emittedAt} />
         <Card className="print-hidden">
           <CardHeader><CardTitle className="text-lg">Lançamentos avulsos</CardTitle><CardDescription>Revise, corrija ou exclua créditos e débitos manuais deste colaborador.</CardDescription></CardHeader>
           <CardContent><TimeAdjustmentsTable adjustments={adjustments} staffId={member.id} /></CardContent>
@@ -121,8 +124,11 @@ export default async function ColaboradorPage({
               const day = index + 1
               const date = `${sinceISO.slice(0, 7)}-${String(day).padStart(2, "0")}`
               const entry = entriesByDate.get(date)
+              const timeOff = timeOffByDate.get(date)
               const calc = entry ? calculateDay(entry, member) : null
-              return <tr key={date}><td>{String(day).padStart(2, "0")}</td><td>{formatTime(entry?.clockIn)}</td><td>{formatTime(entry?.lunchStart)}</td><td>{formatTime(entry?.lunchEnd)}</td><td>{formatTime(entry?.clockOut)}</td><td>{entry ? occurrenceCodes[entry.occurrenceType] ?? "" : ""}</td><td>{calc?.complete && (calc.balanceMinutes ?? 0) > 0 ? formatMinutes(calc.balanceMinutes ?? 0) : calc && (calc.balanceMinutes ?? 0) < 0 ? `-${formatMinutes(Math.abs(calc.balanceMinutes ?? 0))}` : ""}</td><td></td></tr>
+              const occurrence = timeOff ? (timeOff.requestType === "full_day" ? "FC" : "HC") : entry ? occurrenceCodes[entry.occurrenceType] ?? "" : ""
+              const note = timeOff ? `${timeOff.requestType === "full_day" ? "Folga" : "Horas compensatórias"} (${timeOff.status === "approved" ? "aprovada" : timeOff.status === "rejected" ? "rejeitada" : "pendente"})` : ""
+              return <tr key={date}><td>{String(day).padStart(2, "0")}</td><td>{timeOff ? "—" : formatTime(entry?.clockIn)}</td><td>{timeOff ? "—" : formatTime(entry?.lunchStart)}</td><td>{timeOff ? "—" : formatTime(entry?.lunchEnd)}</td><td>{timeOff ? "—" : formatTime(entry?.clockOut)}</td><td>{occurrence}{note && <small className="print-sheet-note"> {note}</small>}</td><td>{calc?.complete && (calc.balanceMinutes ?? 0) > 0 ? formatMinutes(calc.balanceMinutes ?? 0) : calc && (calc.balanceMinutes ?? 0) < 0 ? `-${formatMinutes(Math.abs(calc.balanceMinutes ?? 0))}` : timeOff?.status === "approved" ? "Compensada" : ""}</td><td></td></tr>
             })}</tbody>
           </table>
           <div className="print-sheet-signature"><b>Assinatura do empregado:</b><span /></div>
