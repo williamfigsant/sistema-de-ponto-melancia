@@ -132,18 +132,20 @@
     font-size: 7pt !important;
   }
   html[data-print-report="memoria"] .monthly-report-signatures span { font-size: 7pt !important; }
-  html[data-print-report="folha"] .print-sheet { min-height: 0; height: 277mm; box-sizing: border-box; font-size: 6pt; page-break-after: avoid; }
+  html[data-print-report="folha"] .print-sheet { min-height: 0; height: 285mm; box-sizing: border-box; width: 122%; transform: scale(.82); transform-origin: top left; margin-bottom: -51mm; font-size: 5.5pt; page-break-before: avoid; page-break-after: avoid; overflow: hidden; }
   html[data-print-report="folha"] .print-sheet-title { margin-bottom: 2px; font-size: 11pt; }
   html[data-print-report="folha"] .print-sheet-section-title { padding: 1px 2px; font-size: 7pt; }
   html[data-print-report="folha"] .print-sheet-grid > div { min-height: 13px; padding: 1px 3px; line-height: 1.05; }
   html[data-print-report="folha"] .print-sheet-table { margin-top: 3px; font-size: 6.2pt; }
-  html[data-print-report="folha"] .print-sheet-table th { height: 20px; }
-  html[data-print-report="folha"] .print-sheet-table td { height: 8px; line-height: 1; }
+  html[data-print-report="folha"] .print-sheet-table th { height: 17px; }
+  html[data-print-report="folha"] .print-sheet-table td { height: 6px; line-height: .95; }
   html[data-print-report="folha"] .print-sheet-table th, html[data-print-report="folha"] .print-sheet-table td { padding: 1px 2px !important; }
   html[data-print-report="folha"] .print-sheet-signature { margin-top: 3px; height: 16px; padding: 2px; }
   html[data-print-report="folha"] .print-sheet-footer { margin-top: 2px; font-size: 5.8pt; line-height: 1.05; }
   html[data-print-report="folha"] .print-sheet-note { display: block; font-size: 5.2pt; line-height: 1; }
-  html[data-print-report="folha"] { overflow: hidden !important; }
+  html[data-print-report="folha"], html[data-print-report="folha"] body { overflow: hidden !important; height: 297mm !important; }
+  html[data-print-report="folha"] .print-sheet table { break-inside: avoid; }
+  html[data-print-report="folha"] .print-sheet ~ * { display: none !important; }
   @page { size: A4 portrait; margin: 4mm 6mm; }
 }
 

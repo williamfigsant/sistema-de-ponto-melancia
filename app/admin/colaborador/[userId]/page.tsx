@@ -127,7 +127,7 @@ export default async function ColaboradorPage({
               const timeOff = timeOffByDate.get(date)
               const calc = entry ? calculateDay(entry, member) : null
               const occurrence = timeOff ? (timeOff.requestType === "full_day" ? "FC" : "HC") : entry ? occurrenceCodes[entry.occurrenceType] ?? "" : ""
-              const note = timeOff ? `${timeOff.requestType === "full_day" ? "Folga" : "Horas compensatórias"} (${timeOff.status === "approved" ? "aprovada" : timeOff.status === "rejected" ? "rejeitada" : "pendente"})` : ""
+              const note = timeOff ? (timeOff.requestType === "full_day" ? "Folga" : "Horas compensatórias") : ""
               return <tr key={date}><td>{String(day).padStart(2, "0")}</td><td>{timeOff ? "—" : formatTime(entry?.clockIn)}</td><td>{timeOff ? "—" : formatTime(entry?.lunchStart)}</td><td>{timeOff ? "—" : formatTime(entry?.lunchEnd)}</td><td>{timeOff ? "—" : formatTime(entry?.clockOut)}</td><td>{occurrence}{note && <small className="print-sheet-note"> {note}</small>}</td><td>{calc?.complete && (calc.balanceMinutes ?? 0) > 0 ? formatMinutes(calc.balanceMinutes ?? 0) : calc && (calc.balanceMinutes ?? 0) < 0 ? `-${formatMinutes(Math.abs(calc.balanceMinutes ?? 0))}` : timeOff?.status === "approved" ? "Compensada" : ""}</td><td></td></tr>
             })}</tbody>
           </table>
