@@ -128,14 +128,15 @@ export default async function ColaboradorPage({
               const calc = entry ? calculateDay(entry, member) : null
               const occurrence = timeOff ? (timeOff.requestType === "full_day" ? "FC" : "HC") : entry ? occurrenceCodes[entry.occurrenceType] ?? "" : ""
               const weekday = new Date(`${date}T12:00:00Z`).getUTCDay()
-              const dayLabel = weekday === 0 ? "Domingo" : ""
-              const occurrenceLabels: Record<string, string> = { holiday: "Feriado", justified_absence: "Falta justificada", medical_certificate: "Atestado", early_departure: "Saída antecipada", compensatory_early_departure: "Saída antecipada para compensar horas extras", compensatory_leave: "Folga compensatória", day_off: "Folga" }
-              const note = timeOff ? (timeOff.requestType === "full_day" ? "Folga" : "Horas compensatórias") : dayLabel || occurrenceLabels[entry?.occurrenceType ?? ""] || ""
-              return <tr key={date}><td>{String(day).padStart(2, "0")}</td><td>{timeOff ? "—" : formatTime(entry?.clockIn)}</td><td>{timeOff ? "—" : formatTime(entry?.lunchStart)}</td><td>{timeOff ? "—" : formatTime(entry?.lunchEnd)}</td><td>{timeOff ? "—" : formatTime(entry?.clockOut)}</td><td>{dayLabel && <small className="print-sheet-note">{dayLabel}</small>}{occurrence}{note && <small className="print-sheet-note">{note}</small>}</td><td>{calc?.complete && (calc.balanceMinutes ?? 0) > 0 ? formatMinutes(calc.balanceMinutes ?? 0) : calc && (calc.balanceMinutes ?? 0) < 0 ? `-${formatMinutes(Math.abs(calc.balanceMinutes ?? 0))}` : timeOff?.status === "approved" ? "Compensada" : ""}</td><td></td></tr>
+              const dayLabel = weekday === 0 ? "DOM" : ""
+              const occurrenceLabels: Record<string, string> = { holiday: "FER", justified_absence: "FJ", medical_certificate: "AT", early_departure: "SA", compensatory_early_departure: "SAC", compensatory_leave: "FC", day_off: "FC" }
+              const note = timeOff ? (timeOff.requestType === "full_day" ? "FC — Folga" : "HC — Horas compensatórias") : occurrenceLabels[entry?.occurrenceType ?? ""] || dayLabel
+              const rubric = timeOff ? note : occurrence || note
+              return <tr key={date}><td>{String(day).padStart(2, "0")}</td><td>{timeOff ? "—" : formatTime(entry?.clockIn)}</td><td>{timeOff ? "—" : formatTime(entry?.lunchStart)}</td><td>{timeOff ? "—" : formatTime(entry?.lunchEnd)}</td><td>{timeOff ? "—" : formatTime(entry?.clockOut)}</td><td>{rubric && <small className="print-sheet-note">{rubric}</small>}</td><td>{calc?.complete && (calc.balanceMinutes ?? 0) > 0 ? formatMinutes(calc.balanceMinutes ?? 0) : calc && (calc.balanceMinutes ?? 0) < 0 ? `-${formatMinutes(Math.abs(calc.balanceMinutes ?? 0))}` : timeOff?.status === "approved" ? "Compensada" : ""}</td><td></td></tr>
             })}</tbody>
           </table>
           <div className="print-sheet-signature"><b>Assinatura do empregado:</b><span /></div>
-          <div className="print-sheet-footer"><b>Legenda:</b> FER = Feriado · FJ = Falta justificada · FI = Falta injustificada · AT = Atestado · FC = Folga compensatória · SA = Saída antecipada · SAC = Saída antecipada compensatória<br />Documento emitido em {emittedAt} · Fuso horário: Maricá/RJ (America/Sao_Paulo)</div>
+          <div className="print-sheet-footer"><b>Legenda:</b> DOM = Domingo · FER = Feriado · FJ = Falta justificada · FI = Falta injustificada · AT = Atestado · FC = Folga · HC = Horas compensatórias · SA = Saída antecipada · SAC = Saída antecipada compensatória<br />Documento emitido em {emittedAt} · Fuso horário: Maricá/RJ (America/Sao_Paulo)</div>
         </section>
         <div className="hidden print:flex print:items-center print:justify-between print:border-b print:border-foreground/20 print:pb-3">
           <div className="flex items-center gap-3">
