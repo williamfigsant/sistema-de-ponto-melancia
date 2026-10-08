@@ -262,7 +262,8 @@ export function aggregateDays(
   for (const entry of entries) {
     const calc = calculateDay(entry, member)
     if (!calc.complete) continue
-    const datedDebit = adjustments.filter((adjustment) => adjustment.workDate === entry.workDate && adjustment.minutes < 0).reduce((total, adjustment) => total + Math.abs(adjustment.minutes), 0)
+    const entryDate = String(entry.workDate).slice(0, 10)
+    const datedDebit = adjustments.filter((adjustment) => String(adjustment.workDate ?? "").slice(0, 10) === entryDate && adjustment.minutes < 0).reduce((total, adjustment) => total + Math.abs(adjustment.minutes), 0)
     const coveredDeficit = Math.min(calc.deficitMinutes, datedDebit)
     totalWorked += calc.workedMinutes
     totalOvertime += calc.overtimeMinutes
