@@ -54,15 +54,16 @@ export default async function ColaboradorPage({
   const untilISO = `${selectedYear}-${String(selectedMonth).padStart(2, "0")}-${String(new Date(Date.UTC(selectedYear, selectedMonth, 0)).getUTCDate()).padStart(2, "0")}`
   const emittedAt = nowBR()
 
-  const previousDayISO = new Date(Date.UTC(selectedYear, selectedMonth - 1, 0)).toISOString().slice(0, 10)
+  const previousMonthStartISO = new Date(Date.UTC(selectedYear, selectedMonth - 2, 1)).toISOString().slice(0, 10)
+  const previousMonthEndISO = new Date(Date.UTC(selectedYear, selectedMonth - 1, 0)).toISOString().slice(0, 10)
   const [entries, previousEntries, allAdjustments, timeOffRequests] = await Promise.all([
     getEntriesForUser(member.userId, sinceISO, untilISO),
-    getEntriesForUser(member.userId, "1900-01-01", previousDayISO),
+    getEntriesForUser(member.userId, previousMonthStartISO, previousMonthEndISO),
     getTimeAdjustments(member.id),
     getTimeOffRequestsForUser(member.userId),
   ])
   const adjustments = allAdjustments.filter((adjustment) => !adjustment.workDate || (adjustment.workDate >= sinceISO && adjustment.workDate <= untilISO))
-  const previousAdjustments = allAdjustments.filter((adjustment) => !adjustment.workDate || adjustment.workDate < sinceISO)
+  const previousAdjustments = allAdjustments.filter((adjustment) => adjustment.workDate && adjustment.workDate >= previousMonthStartISO && adjustment.workDate <= previousMonthEndISO)
   const previousBalance = aggregateDays(previousEntries, { ...member, previousBalanceMinutes: 0 }, previousAdjustments).totalBalance
   const monthlyTimeOffRequests = timeOffRequests.filter((request) => request.workDate >= sinceISO && request.workDate <= untilISO)
   const timeOffByDate = new Map(monthlyTimeOffRequests.filter((request) => request.status === "approved").map((request) => [request.workDate, request]))
@@ -217,6 +218,7 @@ export default async function ColaboradorPage({
   totalUsedFromBank={totals.totalUsedFromBank}
             daysCompleted={totals.daysCompleted}
             previousBalance={previousBalance}
+            totalBankBalance={totals.totalBalance}
           />
         </div>
 
