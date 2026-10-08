@@ -7,15 +7,18 @@ export function SummaryCards({
   totalDeficit,
   totalUsedFromBank,
   daysCompleted,
+  previousBalance = 0,
 }: {
   totalWorked: number
   totalOvertime: number
   totalDeficit: number
   totalUsedFromBank: number
   daysCompleted: number
+  previousBalance?: number
 }) {
   const items = [
     { label: "Dias registrados", value: String(daysCompleted), tone: "" },
+    { label: "Saldo mês anterior", value: formatMinutes(previousBalance, true), tone: "text-muted-foreground" },
     { label: "Horas trabalhadas", value: formatMinutes(totalWorked), tone: "" },
     {
       label: "Horas extras",

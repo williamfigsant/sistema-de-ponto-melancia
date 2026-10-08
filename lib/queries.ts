@@ -31,11 +31,13 @@ export async function getStaffByUserId(userId: string) {
 }
 
 /** Registros de um colaborador desde uma data (YYYY-MM-DD). */
-export async function getEntriesForUser(userId: string, sinceISO: string) {
+export async function getEntriesForUser(userId: string, sinceISO: string, untilISO?: string) {
+  const dateConditions = [gte(timeEntries.workDate, sinceISO)]
+  if (untilISO) dateConditions.push(lte(timeEntries.workDate, untilISO))
   return db
     .select()
     .from(timeEntries)
-    .where(and(eq(timeEntries.userId, userId), gte(timeEntries.workDate, sinceISO)))
+    .where(and(eq(timeEntries.userId, userId), ...dateConditions))
     .orderBy(desc(timeEntries.workDate))
 }
 

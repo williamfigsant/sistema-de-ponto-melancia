@@ -51,14 +51,16 @@ export default async function ColaboradorPage({
   const selectedYear = Number(search.ano) || current[0]
   const selectedMonth = Math.min(12, Math.max(1, Number(search.mes) || current[1]))
   const sinceISO = `${selectedYear}-${String(selectedMonth).padStart(2, "0")}-01`
+  const untilISO = `${selectedYear}-${String(selectedMonth).padStart(2, "0")}-${String(new Date(Date.UTC(selectedYear, selectedMonth, 0)).getUTCDate()).padStart(2, "0")}`
   const emittedAt = nowBR()
 
-  const [entries, adjustments, timeOffRequests] = await Promise.all([
-    getEntriesForUser(member.userId, sinceISO),
+  const [entries, allAdjustments, timeOffRequests] = await Promise.all([
+    getEntriesForUser(member.userId, sinceISO, untilISO),
     getTimeAdjustments(member.id),
     getTimeOffRequestsForUser(member.userId),
   ])
-  const monthlyTimeOffRequests = timeOffRequests.filter((request) => request.workDate.startsWith(`${selectedYear}-${String(selectedMonth).padStart(2, "0")}`))
+  const adjustments = allAdjustments.filter((adjustment) => !adjustment.workDate || (adjustment.workDate >= sinceISO && adjustment.workDate <= untilISO))
+  const monthlyTimeOffRequests = timeOffRequests.filter((request) => request.workDate >= sinceISO && request.workDate <= untilISO)
   const timeOffByDate = new Map(monthlyTimeOffRequests.filter((request) => request.status === "approved").map((request) => [request.workDate, request]))
   const totals = aggregateDays(entries, member, adjustments)
   const scheduled = scheduledMinutesForStaff(member)
@@ -209,7 +211,8 @@ export default async function ColaboradorPage({
             totalOvertime={totals.totalOvertime}
   totalDeficit={totals.totalDeficit}
   totalUsedFromBank={totals.totalUsedFromBank}
-  daysCompleted={totals.daysCompleted}
+            daysCompleted={totals.daysCompleted}
+            previousBalance={member.previousBalanceMinutes}
           />
         </div>
 

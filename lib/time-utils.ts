@@ -278,7 +278,7 @@ export function aggregateDays(
 
   return {
     totalWorked,
-    totalOvertime: availableOvertime,
+    totalOvertime,
     totalDeficit: totalDeficit + undatedDebits,
     totalBalance: totalAvailableBalance,
     totalUsedFromBank: usedFromBank,
