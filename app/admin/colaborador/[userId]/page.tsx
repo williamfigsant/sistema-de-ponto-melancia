@@ -68,10 +68,10 @@ export default async function ColaboradorPage({
   }
   const adjustments = allAdjustments.filter((adjustment) => createdInRange(adjustment, sinceISO, untilISO))
   const previousAdjustments = allAdjustments.filter((adjustment) => createdInRange(adjustment, previousMonthStartISO, previousMonthEndISO))
-  const previousBalance = aggregateDays(previousEntries, { ...member, previousBalanceMinutes: 0 }, previousAdjustments).totalBalance
+  const previousBalance = aggregateDays(previousEntries, { ...member, previousBalanceMinutes: 0 }, previousAdjustments.filter((adjustment) => adjustment.minutes < 0)).totalBalance
   const monthlyTimeOffRequests = timeOffRequests.filter((request) => request.workDate >= sinceISO && request.workDate <= untilISO)
   const timeOffByDate = new Map(monthlyTimeOffRequests.filter((request) => request.status === "approved").map((request) => [request.workDate, request]))
-  const totals = aggregateDays(entries, { ...member, previousBalanceMinutes: previousBalance }, adjustments)
+  const totals = aggregateDays(entries, { ...member, previousBalanceMinutes: previousBalance }, adjustments.filter((adjustment) => adjustment.minutes < 0))
   const scheduled = scheduledMinutesForStaff(member)
   // "2024-01-06" é um sábado — usado só para calcular a carga de sábado.
   const scheduledSaturday = scheduledMinutesForStaff(member, "2024-01-06")
