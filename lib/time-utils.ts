@@ -238,7 +238,7 @@ export function calculateDay(entry: TimeEntry, member: Staff): DayCalculation {
     minutosComputaveis: tolerancia?.minutosComputaveis ?? 0,
     intervalo: { realizado: lunchMinutes, previsto: intervaloPrevisto, diferenca: intervaloDiferenca, excedente: excedenteIntervalo, status: intervaloStatus },
     alertas,
-    regraAplicada: { regra: "CLT Art. 58, §1º e intervalo intrajornada", versao: "2026.1", origem: "CLT/TST — parametrização padrão", dataAplicacao: new Date().toISOString() },
+    regraAplicada: { regra: "CLT Art. 58, §1º e intervalo intrajornada", versao: "2026.1", origem: "CLT/TST — parametrização padrão", dataAplicacao: "2026-01-01T00:00:00.000Z" },
   }
 }
 
