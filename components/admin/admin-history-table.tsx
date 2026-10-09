@@ -56,8 +56,10 @@ export function AdminHistoryTable({
           <TableBody>
             {entries.map((entry) => {
               const calc = calculateDay(entry, member)
-              const dailyAdjustment = adjustments.filter((adjustment) => adjustment.workDate === entry.workDate).reduce((total, adjustment) => total + Math.abs(adjustment.minutes), 0)
+              const dailyAdjustments = adjustments.filter((adjustment) => String(adjustment.workDate ?? "").slice(0, 10) === entry.workDate)
+              const dailyAdjustment = dailyAdjustments.reduce((total, adjustment) => total + Math.abs(adjustment.minutes), 0)
               const displayedBalance = calc.balanceMinutes + dailyAdjustment
+              const bankUsage = dailyAdjustments.filter((adjustment) => adjustment.minutes < 0).reduce((total, adjustment) => total + Math.abs(adjustment.minutes), 0)
               return (
                 <TableRow key={entry.id}>
                   <TableCell className="font-medium">
@@ -76,7 +78,7 @@ export function AdminHistoryTable({
                   </TableCell>
                   <TableCell className="tabular-nums">{formatTime(entry.clockOut)}</TableCell>
                   <TableCell className="text-right tabular-nums">
-                    {calc.complete ? <div><div>{formatMinutes(calc.workedMinutes)}</div>{(calc.totalVariacoes > 0 || calc.alertas.length > 0) && <div className="mt-1 flex flex-wrap items-center justify-end gap-1 text-[10px] text-muted-foreground"><span>Auditoria: {calc.totalVariacoes} min · tolerados: {calc.minutosTolerados} min · intervalo excedente: {calc.intervalo.excedente} min · {calc.intervalo.status.toLowerCase().replaceAll("_", " ")}</span>{calc.alertas.map((alerta) => <Badge key={alerta} variant="outline" className="px-1.5 py-0 text-[9px] font-medium normal-case">{alerta === "INTERVALO_SUPERIOR_AO_PREVISTO" ? "Intervalo superior ao previsto" : alerta === "ALERTA_DE_INTERVALO_IRREGULAR" ? "Intervalo irregular" : alerta}</Badge>)}</div>}</div> : "--"}
+                    {calc.complete ? <div><div>{formatMinutes(calc.workedMinutes)}</div>{(calc.totalVariacoes > 0 || calc.alertas.length > 0 || bankUsage > 0) && <div className="mt-1 flex flex-wrap items-center justify-end gap-1 text-[10px] text-muted-foreground">{bankUsage > 0 && <Badge variant="outline" className="border-amber-500/50 px-1.5 py-0 text-[9px] font-medium text-amber-500">{formatMinutes(bankUsage)} usada do banco</Badge>}<span>Auditoria: {calc.totalVariacoes} min · tolerados: {calc.minutosTolerados} min · intervalo excedente: {calc.intervalo.excedente} min · {calc.intervalo.status.toLowerCase().replaceAll("_", " ")}</span>{calc.alertas.map((alerta) => <Badge key={alerta} variant="outline" className="px-1.5 py-0 text-[9px] font-medium normal-case">{alerta === "INTERVALO_SUPERIOR_AO_PREVISTO" ? "Intervalo superior ao previsto" : alerta === "ALERTA_DE_INTERVALO_IRREGULAR" ? "Intervalo irregular" : alerta}</Badge>)}</div>}</div> : "--"}
                   </TableCell>
                   <TableCell className="text-right tabular-nums">
                     {calc.complete ? (
@@ -121,7 +123,7 @@ export function AdminHistoryTable({
           employeeUserId={member.userId}
           workDate={editing.workDate}
           entry={editing.entry}
-          adjustments={adjustments.filter((adjustment) => adjustment.workDate === editing.workDate)}
+          adjustments={adjustments.filter((adjustment) => String(adjustment.workDate ?? "").slice(0, 10) === editing.workDate)}
           open={Boolean(editing)}
           onOpenChange={(o) => !o && setEditing(null)}
         />

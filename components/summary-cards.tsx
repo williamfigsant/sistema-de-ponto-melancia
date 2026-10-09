@@ -24,7 +24,7 @@ export function SummaryCards({
     { label: "Total no banco", value: formatMinutes(totalBankBalance, true), tone: totalBankBalance >= 0 ? "text-primary" : "text-destructive" },
     { label: "Horas trabalhadas", value: formatMinutes(totalWorked), tone: "" },
     {
-      label: "Horas extras",
+      label: "Horas extras do mês",
       value: formatMinutes(totalOvertime),
       tone: "text-primary",
     },
