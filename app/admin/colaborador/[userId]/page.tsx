@@ -62,8 +62,12 @@ export default async function ColaboradorPage({
     getTimeAdjustments(member.id),
     getTimeOffRequestsForUser(member.userId),
   ])
-  const adjustments = allAdjustments.filter((adjustment) => !adjustment.workDate || (adjustment.workDate >= sinceISO && adjustment.workDate <= untilISO))
-  const previousAdjustments = allAdjustments.filter((adjustment) => adjustment.workDate && adjustment.workDate >= previousMonthStartISO && adjustment.workDate <= previousMonthEndISO)
+  const createdInRange = (adjustment: { createdAt: Date | string; workDate: string | null }, start: string, end: string) => {
+    const createdDate = new Date(adjustment.createdAt).toISOString().slice(0, 10)
+    return createdDate >= start && createdDate <= end
+  }
+  const adjustments = allAdjustments.filter((adjustment) => createdInRange(adjustment, sinceISO, untilISO))
+  const previousAdjustments = allAdjustments.filter((adjustment) => createdInRange(adjustment, previousMonthStartISO, previousMonthEndISO))
   const previousBalance = aggregateDays(previousEntries, { ...member, previousBalanceMinutes: 0 }, previousAdjustments).totalBalance
   const monthlyTimeOffRequests = timeOffRequests.filter((request) => request.workDate >= sinceISO && request.workDate <= untilISO)
   const timeOffByDate = new Map(monthlyTimeOffRequests.filter((request) => request.status === "approved").map((request) => [request.workDate, request]))
