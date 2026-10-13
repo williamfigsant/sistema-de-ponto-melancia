@@ -54,11 +54,9 @@ export default async function ColaboradorPage({
   const untilISO = `${selectedYear}-${String(selectedMonth).padStart(2, "0")}-${String(new Date(Date.UTC(selectedYear, selectedMonth, 0)).getUTCDate()).padStart(2, "0")}`
   const emittedAt = nowBR()
 
-  const previousMonthStartISO = new Date(Date.UTC(selectedYear, selectedMonth - 2, 1)).toISOString().slice(0, 10)
-  const previousMonthEndISO = new Date(Date.UTC(selectedYear, selectedMonth - 1, 0)).toISOString().slice(0, 10)
   const [entries, previousEntries, allAdjustments, timeOffRequests] = await Promise.all([
     getEntriesForUser(member.userId, sinceISO, untilISO),
-    getEntriesForUser(member.userId, previousMonthStartISO, previousMonthEndISO),
+    getEntriesForUser(member.userId, "1900-01-01", `${new Date(Date.UTC(selectedYear, selectedMonth - 1, 0)).toISOString().slice(0, 10)}`),
     getTimeAdjustments(member.id),
     getTimeOffRequestsForUser(member.userId),
   ])
@@ -67,8 +65,8 @@ export default async function ColaboradorPage({
     return createdDate >= start && createdDate <= end
   }
   const adjustments = allAdjustments.filter((adjustment) => createdInRange(adjustment, sinceISO, untilISO))
-  const previousAdjustments = allAdjustments.filter((adjustment) => createdInRange(adjustment, previousMonthStartISO, previousMonthEndISO))
-  const previousBalance = aggregateDays(previousEntries, { ...member, previousBalanceMinutes: 0 }, previousAdjustments.filter((adjustment) => adjustment.minutes < 0)).totalBalance
+  const previousAdjustments = allAdjustments.filter((adjustment) => new Date(adjustment.createdAt).toISOString().slice(0, 10) < sinceISO)
+  const previousBalance = aggregateDays(previousEntries, { ...member, previousBalanceMinutes: 0 }, previousAdjustments).totalBalance
   const monthlyTimeOffRequests = timeOffRequests.filter((request) => request.workDate >= sinceISO && request.workDate <= untilISO)
   const timeOffByDate = new Map(monthlyTimeOffRequests.filter((request) => request.status === "approved").map((request) => [request.workDate, request]))
   const totals = aggregateDays(entries, { ...member, previousBalanceMinutes: previousBalance }, adjustments.filter((adjustment) => adjustment.minutes < 0))
