@@ -139,8 +139,9 @@ export default async function ColaboradorPage({
               const weekday = new Date(`${date}T12:00:00Z`).getUTCDay()
               const dayLabel = weekday === 0 ? "DOM" : ""
               const occurrenceLabels: Record<string, string> = { holiday: "FER", justified_absence: "FJ", medical_certificate: "AT", early_departure: "SA", compensatory_early_departure: "SAC", compensatory_leave: "FC", day_off: "FC" }
+              const dailyBankUsage = entry ? adjustments.filter((adjustment) => String(adjustment.workDate ?? "").slice(0, 10) === date && adjustment.minutes < 0).reduce((total, adjustment) => total + Math.abs(adjustment.minutes), 0) : 0
               const note = timeOff ? (timeOff.requestType === "full_day" ? "FC — Folga" : "HC — Hora comp.") : occurrenceLabels[entry?.occurrenceType ?? ""] || dayLabel
-              const rubric = timeOff ? note : occurrence || note
+              const rubric = [timeOff ? note : occurrence || note, dailyBankUsage > 0 ? `Banco -${formatMinutes(dailyBankUsage)}` : ""].filter(Boolean).join(" · ")
               return <tr key={date}><td>{String(day).padStart(2, "0")}</td><td>{timeOff ? "—" : formatTime(entry?.clockIn)}</td><td>{timeOff ? "—" : formatTime(entry?.lunchStart)}</td><td>{timeOff ? "—" : formatTime(entry?.lunchEnd)}</td><td>{timeOff ? "—" : formatTime(entry?.clockOut)}</td><td>{rubric && <small className="print-sheet-note">{rubric}</small>}</td><td>{calc?.complete && (calc.balanceMinutes ?? 0) > 0 ? formatMinutes(calc.balanceMinutes ?? 0) : calc && (calc.balanceMinutes ?? 0) < 0 ? `-${formatMinutes(Math.abs(calc.balanceMinutes ?? 0))}` : timeOff?.status === "approved" ? "Compensada" : ""}</td><td></td></tr>
             })}</tbody>
           </table>
