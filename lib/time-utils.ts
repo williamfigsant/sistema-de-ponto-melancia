@@ -242,6 +242,12 @@ export function calculateDay(entry: TimeEntry, member: Staff): DayCalculation {
   }
 }
 
+function isBankUsageAdjustment(adjustment: { description?: string | null; minutes: number; workDate?: string | null }) {
+  if (adjustment.minutes >= 0) return false
+  const description = (adjustment.description ?? "").toLowerCase()
+  return /banco|compensat|sa[ií]da antecipada|entrada compensada|uso/.test(description)
+}
+
 /** Calcula o saldo líquido sem descontar duas vezes débitos que cobrem um déficit do próprio dia. */
 export function calculateLedgerBalance(
   entries: TimeEntry[],
@@ -251,7 +257,7 @@ export function calculateLedgerBalance(
   let balance = 0
   const datedDebits = new Map<string, number>()
   for (const adjustment of adjustments) {
-    if (adjustment.minutes < 0 && adjustment.workDate) {
+    if (adjustment.minutes < 0 && adjustment.workDate && isBankUsageAdjustment(adjustment)) {
       const date = String(adjustment.workDate).slice(0, 10)
       datedDebits.set(date, (datedDebits.get(date) ?? 0) + Math.abs(adjustment.minutes))
     }
@@ -268,7 +274,7 @@ export function calculateLedgerBalance(
 
   const credits = adjustments.reduce((total, adjustment) => total + Math.max(0, adjustment.minutes), 0)
   const uncoveredDebits = [...datedDebits.values()].reduce((total, minutes) => total + minutes, 0)
-  const undatedDebits = adjustments.reduce((total, adjustment) => total + (adjustment.minutes < 0 && !adjustment.workDate ? Math.abs(adjustment.minutes) : 0), 0)
+  const undatedDebits = adjustments.reduce((total, adjustment) => total + (adjustment.minutes < 0 && !isBankUsageAdjustment(adjustment) ? Math.abs(adjustment.minutes) : 0), 0)
   return balance + credits - uncoveredDebits - undatedDebits
 }
 
@@ -302,8 +308,8 @@ export function aggregateDays(
   }
 
   const credits = adjustments.filter((adjustment) => adjustment.minutes > 0).reduce((total, adjustment) => total + adjustment.minutes, 0)
-  const usedFromBank = adjustments.filter((adjustment) => adjustment.minutes < 0 && adjustment.workDate).reduce((total, adjustment) => total + Math.abs(adjustment.minutes), 0)
-  const undatedDebits = adjustments.filter((adjustment) => adjustment.minutes < 0 && !adjustment.workDate).reduce((total, adjustment) => total + Math.abs(adjustment.minutes), 0)
+  const usedFromBank = adjustments.filter((adjustment) => adjustment.minutes < 0 && adjustment.workDate && isBankUsageAdjustment(adjustment)).reduce((total, adjustment) => total + Math.abs(adjustment.minutes), 0)
+  const undatedDebits = adjustments.filter((adjustment) => adjustment.minutes < 0 && !isBankUsageAdjustment(adjustment)).reduce((total, adjustment) => total + Math.abs(adjustment.minutes), 0)
   const availableOvertime = member.previousBalanceMinutes + totalOvertime + credits - usedFromBank
   const totalAvailableBalance = availableOvertime - totalDeficit - undatedDebits
 
