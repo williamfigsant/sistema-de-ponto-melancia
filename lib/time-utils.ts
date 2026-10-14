@@ -242,17 +242,34 @@ export function calculateDay(entry: TimeEntry, member: Staff): DayCalculation {
   }
 }
 
-/** Soma o saldo líquido de dias e lançamentos, aplicando cada lançamento uma única vez. */
+/** Calcula o saldo líquido sem descontar duas vezes débitos que cobrem um déficit do próprio dia. */
 export function calculateLedgerBalance(
   entries: TimeEntry[],
   member: Staff,
-  adjustments: { minutes: number }[] = [],
+  adjustments: { minutes: number; workDate?: string | null }[] = [],
 ): number {
-  const dailyBalance = entries.reduce((total, entry) => {
+  let balance = 0
+  const datedDebits = new Map<string, number>()
+  for (const adjustment of adjustments) {
+    if (adjustment.minutes < 0 && adjustment.workDate) {
+      const date = String(adjustment.workDate).slice(0, 10)
+      datedDebits.set(date, (datedDebits.get(date) ?? 0) + Math.abs(adjustment.minutes))
+    }
+  }
+
+  for (const entry of entries) {
     const calculation = calculateDay(entry, member)
-    return calculation.complete ? total + calculation.balanceMinutes : total
-  }, 0)
-  return dailyBalance + adjustments.reduce((total, adjustment) => total + adjustment.minutes, 0)
+    if (!calculation.complete) continue
+    const date = String(entry.workDate).slice(0, 10)
+    const coveredDeficit = Math.min(calculation.deficitMinutes, datedDebits.get(date) ?? 0)
+    balance += calculation.balanceMinutes + coveredDeficit
+    if (coveredDeficit > 0) datedDebits.set(date, (datedDebits.get(date) ?? 0) - coveredDeficit)
+  }
+
+  const credits = adjustments.reduce((total, adjustment) => total + Math.max(0, adjustment.minutes), 0)
+  const uncoveredDebits = [...datedDebits.values()].reduce((total, minutes) => total + minutes, 0)
+  const undatedDebits = adjustments.reduce((total, adjustment) => total + (adjustment.minutes < 0 && !adjustment.workDate ? Math.abs(adjustment.minutes) : 0), 0)
+  return balance + credits - uncoveredDebits - undatedDebits
 }
 
 /** Agrega vários dias em totais. */
