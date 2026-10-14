@@ -274,7 +274,7 @@ export function aggregateDays(
   const credits = adjustments.filter((adjustment) => adjustment.minutes > 0).reduce((total, adjustment) => total + adjustment.minutes, 0)
   const usedFromBank = adjustments.filter((adjustment) => adjustment.minutes < 0 && adjustment.workDate).reduce((total, adjustment) => total + Math.abs(adjustment.minutes), 0)
   const undatedDebits = adjustments.filter((adjustment) => adjustment.minutes < 0 && !adjustment.workDate).reduce((total, adjustment) => total + Math.abs(adjustment.minutes), 0)
-  const availableOvertime = Math.max(0, member.previousBalanceMinutes + totalOvertime + credits - usedFromBank)
+  const availableOvertime = member.previousBalanceMinutes + totalOvertime + credits - usedFromBank
   const totalAvailableBalance = availableOvertime - totalDeficit - undatedDebits
 
   return {
