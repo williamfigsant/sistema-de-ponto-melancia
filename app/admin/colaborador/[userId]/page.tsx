@@ -67,7 +67,7 @@ export default async function ColaboradorPage({
   }
   const adjustments = allAdjustments.filter((adjustment) => createdInRange(adjustment, sinceISO, untilISO))
   const previousAdjustments = allAdjustments.filter((adjustment) => new Date(adjustment.createdAt).toISOString().slice(0, 10) < sinceISO)
-  const previousBalance = calculateLedgerBalance(previousEntries, { ...member, previousBalanceMinutes: 0 }, previousAdjustments)
+  const previousBalance = aggregateDays(previousEntries, { ...member, previousBalanceMinutes: 0 }, previousAdjustments).totalBalance
   const monthlyTimeOffRequests = timeOffRequests.filter((request) => request.workDate >= sinceISO && request.workDate <= untilISO)
   const timeOffByDate = new Map(monthlyTimeOffRequests.filter((request) => request.status === "approved").map((request) => [request.workDate, request]))
   const totals = aggregateDays(entries, { ...member, previousBalanceMinutes: previousBalance }, adjustments)
@@ -222,7 +222,7 @@ export default async function ColaboradorPage({
   totalUsedFromBank={totals.totalUsedFromBank}
             daysCompleted={totals.daysCompleted}
             previousBalance={previousBalance}
-            totalBankBalance={previousBalance + calculateLedgerBalance(entries, { ...member, previousBalanceMinutes: 0 }, adjustments)}
+            totalBankBalance={totals.totalBalance}
           />
         </div>
 
