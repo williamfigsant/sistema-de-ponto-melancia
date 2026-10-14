@@ -61,13 +61,14 @@ export default async function ColaboradorPage({
     getTimeAdjustments(member.id),
     getTimeOffRequestsForUser(member.userId),
   ])
-  const createdInRange = (adjustment: { createdAt: Date | string; workDate: string | null }, start: string, end: string) => {
-    const createdDate = new Date(adjustment.createdAt).toISOString().slice(0, 10)
-    return createdDate >= start && createdDate <= end
+  const adjustmentPeriodDate = (adjustment: { createdAt: Date | string; workDate: string | null }) => adjustment.workDate ? String(adjustment.workDate).slice(0, 10) : new Date(adjustment.createdAt).toISOString().slice(0, 10)
+  const inRange = (adjustment: { createdAt: Date | string; workDate: string | null }, start: string, end: string) => {
+    const periodDate = adjustmentPeriodDate(adjustment)
+    return periodDate >= start && periodDate <= end
   }
-  const adjustments = allAdjustments.filter((adjustment) => createdInRange(adjustment, sinceISO, untilISO))
-  const previousAdjustments = allAdjustments.filter((adjustment) => new Date(adjustment.createdAt).toISOString().slice(0, 10) < sinceISO)
-  const previousBalance = calculateLedgerBalance(previousEntries, { ...member, previousBalanceMinutes: 0 }, previousAdjustments)
+  const adjustments = allAdjustments.filter((adjustment) => inRange(adjustment, sinceISO, untilISO))
+  const previousAdjustments = allAdjustments.filter((adjustment) => adjustmentPeriodDate(adjustment) < sinceISO)
+  const previousBalance = aggregateDays(previousEntries, { ...member, previousBalanceMinutes: 0 }, previousAdjustments).totalBalance
   const monthlyTimeOffRequests = timeOffRequests.filter((request) => request.workDate >= sinceISO && request.workDate <= untilISO)
   const timeOffByDate = new Map(monthlyTimeOffRequests.filter((request) => request.status === "approved").map((request) => [request.workDate, request]))
   const totals = aggregateDays(entries, { ...member, previousBalanceMinutes: previousBalance }, adjustments)
@@ -222,7 +223,7 @@ export default async function ColaboradorPage({
   totalUsedFromBank={totals.totalUsedFromBank}
             daysCompleted={totals.daysCompleted}
             previousBalance={previousBalance}
-            totalBankBalance={previousBalance + calculateLedgerBalance(entries, { ...member, previousBalanceMinutes: 0 }, adjustments)}
+            totalBankBalance={totals.totalBalance}
           />
         </div>
 
