@@ -242,6 +242,19 @@ export function calculateDay(entry: TimeEntry, member: Staff): DayCalculation {
   }
 }
 
+/** Soma o saldo líquido de dias e lançamentos, aplicando cada lançamento uma única vez. */
+export function calculateLedgerBalance(
+  entries: TimeEntry[],
+  member: Staff,
+  adjustments: { minutes: number }[] = [],
+): number {
+  const dailyBalance = entries.reduce((total, entry) => {
+    const calculation = calculateDay(entry, member)
+    return calculation.complete ? total + calculation.balanceMinutes : total
+  }, 0)
+  return dailyBalance + adjustments.reduce((total, adjustment) => total + adjustment.minutes, 0)
+}
+
 /** Agrega vários dias em totais. */
 export function aggregateDays(
   entries: TimeEntry[],
