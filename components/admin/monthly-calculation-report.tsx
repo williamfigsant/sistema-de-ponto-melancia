@@ -10,7 +10,7 @@ export function MonthlyCalculationReport({ entries, adjustments, timeOffRequests
   const rows = Array.from({ length: daysInMonth }, (_, index) => {
     const date = `${year}-${String(month).padStart(2, "0")}-${String(index + 1).padStart(2, "0")}`
     const entry = byDate.get(date)
-    const dailyDebits = adjustments.filter((adjustment) => adjustment.workDate === date && adjustment.minutes < 0 && isBankUsageAdjustment(adjustment)).reduce((sum, adjustment) => sum + Math.abs(adjustment.minutes), 0)
+    const dailyDebits = adjustments.filter((adjustment) => String(adjustment.workDate ?? "").slice(0, 10) === date && adjustment.minutes < 0 && isBankUsageAdjustment(adjustment)).reduce((sum, adjustment) => sum + Math.abs(adjustment.minutes), 0)
     return { date, entry, calc: entry ? calculateDay(entry, member) : null, dailyDebits, timeOff: timeOffByDate.get(date) }
   })
   const complete = rows.filter((row) => row.calc?.complete)
