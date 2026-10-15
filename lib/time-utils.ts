@@ -242,7 +242,7 @@ export function calculateDay(entry: TimeEntry, member: Staff): DayCalculation {
   }
 }
 
-function isBankUsageAdjustment(adjustment: { description?: string | null; minutes: number; workDate?: string | null }) {
+export function isBankUsageAdjustment(adjustment: { description?: string | null; minutes: number; workDate?: string | null }) {
   if (adjustment.minutes >= 0) return false
   const description = (adjustment.description ?? "").toLowerCase()
   return /banco|compensat|sa[ií]da antecipada|entrada compensada|uso/.test(description)
