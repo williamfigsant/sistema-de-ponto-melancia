@@ -33,12 +33,17 @@ export default async function AdminPage() {
   ) ?? allStaff[0]
 
   const sinceISO = currentMonthStartISO()
+  const untilISO = new Date().toISOString().slice(0, 10)
   const employeeSummaries = await Promise.all(activeEmployees.map(async (member) => {
     const [entries, adjustments] = await Promise.all([
-      getEntriesForUser(member.userId, sinceISO),
+      getEntriesForUser(member.userId, sinceISO, untilISO),
       getTimeAdjustments(member.id),
     ])
-    const agg = aggregateDays(entries, member, adjustments)
+    const monthlyAdjustments = adjustments.filter((adjustment) => {
+      const date = adjustment.workDate ? String(adjustment.workDate).slice(0, 10) : new Date(adjustment.createdAt).toISOString().slice(0, 10)
+      return date >= sinceISO && date <= untilISO
+    })
+    const agg = aggregateDays(entries, member, monthlyAdjustments)
     return { member, ...agg }
   }))
 
