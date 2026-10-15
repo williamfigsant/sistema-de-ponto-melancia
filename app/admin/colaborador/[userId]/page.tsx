@@ -61,7 +61,8 @@ export default async function ColaboradorPage({
     getTimeAdjustments(member.id),
     getTimeOffRequestsForUser(member.userId),
   ])
-  const adjustmentPeriodDate = (adjustment: { createdAt: Date | string; workDate: string | null }) => adjustment.workDate ? String(adjustment.workDate).slice(0, 10) : new Date(adjustment.createdAt).toISOString().slice(0, 10)
+  const normalizeDate = (value: Date | string | null | undefined) => value ? (value instanceof Date ? value.toISOString() : String(value)).slice(0, 10) : ""
+  const adjustmentPeriodDate = (adjustment: { createdAt: Date | string; workDate: string | Date | null }) => adjustment.workDate ? normalizeDate(adjustment.workDate) : normalizeDate(adjustment.createdAt)
   const inRange = (adjustment: { createdAt: Date | string; workDate: string | null }, start: string, end: string) => {
     const periodDate = adjustmentPeriodDate(adjustment)
     return periodDate >= start && periodDate <= end
@@ -141,7 +142,7 @@ export default async function ColaboradorPage({
               const weekday = new Date(`${date}T12:00:00Z`).getUTCDay()
               const dayLabel = weekday === 0 ? "DOM" : ""
               const occurrenceLabels: Record<string, string> = { holiday: "FER", justified_absence: "FJ", medical_certificate: "AT", early_departure: "SA", compensatory_early_departure: "SAC", compensatory_leave: "FC", day_off: "FC" }
-              const dailyBankUsage = entry ? adjustments.filter((adjustment) => String(adjustment.workDate ?? "").slice(0, 10) === date && adjustment.minutes < 0 && /banco|compensat|sa[ií]da antecipada|entrada compensada|uso/i.test(adjustment.description ?? "")).reduce((total, adjustment) => total + Math.abs(adjustment.minutes), 0) : 0
+              const dailyBankUsage = entry ? adjustments.filter((adjustment) => normalizeDate(adjustment.workDate) === date && adjustment.minutes < 0 && /banco|compensat|sa[ií]da antecipada|entrada compensada|uso/i.test(adjustment.description ?? "")).reduce((total, adjustment) => total + Math.abs(adjustment.minutes), 0) : 0
               const note = timeOff ? (timeOff.requestType === "full_day" ? "FC — Folga" : "HC — Hora comp.") : occurrenceLabels[entry?.occurrenceType ?? ""] || dayLabel
               const rubric = [timeOff ? note : occurrence || note, dailyBankUsage > 0 ? `Banco -${formatMinutes(dailyBankUsage)}` : ""].filter(Boolean).join(" · ")
               const isApprovedTimeOffWithoutEntry = Boolean(timeOff && !entry)
