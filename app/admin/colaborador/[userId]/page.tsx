@@ -68,8 +68,8 @@ export default async function ColaboradorPage({
   }
   const adjustments = allAdjustments.filter((adjustment) => inRange(adjustment, sinceISO, untilISO))
   const previousAdjustments = allAdjustments.filter((adjustment) => adjustmentPeriodDate(adjustment) < sinceISO)
-  const previousBalance = aggregateDays(previousEntries, { ...member, previousBalanceMinutes: 0 }, previousAdjustments).totalBalance
-  const monthlyTimeOffRequests = timeOffRequests.filter((request) => request.workDate >= sinceISO && request.workDate <= untilISO)
+  const previousBalance = aggregateDays(previousEntries, { ...member, previousBalanceMinutes: 0 }, []).totalOvertime
+  const monthlyTimeOffRequests = timeOffRequests.filter((request) => request.status === "approved" && request.workDate >= sinceISO && request.workDate <= untilISO)
   const timeOffByDate = new Map(monthlyTimeOffRequests.filter((request) => request.status === "approved").map((request) => [request.workDate, request]))
   const totals = aggregateDays(entries, { ...member, previousBalanceMinutes: previousBalance }, adjustments)
   const scheduled = scheduledMinutesForStaff(member)
