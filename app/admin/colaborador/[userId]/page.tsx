@@ -147,7 +147,7 @@ export default async function ColaboradorPage({
               const rubric = [timeOff ? note : occurrence || note, dailyBankUsage > 0 ? `Banco -${formatMinutes(dailyBankUsage)}` : ""].filter(Boolean).join(" · ")
               const isApprovedTimeOffWithoutEntry = !entry && Boolean(timeOff)
               const compensatedDeficit = calc && dailyBankUsage > 0 ? Math.min(calc.deficitMinutes, dailyBankUsage) : 0
-              const displayedBalance = calc ? calc.balanceMinutes + compensatedDeficit : 0
+              const displayedBalance = calc ? (dailyBankUsage > 0 && calc.deficitMinutes > 0 ? Math.max(0, calc.balanceMinutes + compensatedDeficit) : calc.balanceMinutes) : 0
               return <tr key={date}><td>{String(day).padStart(2, "0")}</td><td>{isApprovedTimeOffWithoutEntry ? "—" : formatTime(entry?.clockIn)}</td><td>{isApprovedTimeOffWithoutEntry ? "—" : formatTime(entry?.lunchStart)}</td><td>{isApprovedTimeOffWithoutEntry ? "—" : formatTime(entry?.lunchEnd)}</td><td>{isApprovedTimeOffWithoutEntry ? "—" : formatTime(entry?.clockOut)}</td><td>{rubric && <small className="print-sheet-note">{rubric}</small>}</td><td>{calc?.complete && displayedBalance > 0 ? formatMinutes(displayedBalance) : calc?.complete && displayedBalance < 0 ? `-${formatMinutes(Math.abs(displayedBalance))}` : timeOff?.status === "approved" && !entry ? "Compensada" : ""}</td><td></td></tr>
             })}</tbody>
           </table>
