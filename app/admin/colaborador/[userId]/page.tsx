@@ -135,7 +135,7 @@ export default async function ColaboradorPage({
             <tbody>{Array.from({ length: daysInMonth }, (_, index) => {
               const day = index + 1
               const date = `${sinceISO.slice(0, 7)}-${String(day).padStart(2, "0")}`
-              const entry = entriesByDate.get(date)
+              const entry = entries.find((candidate) => normalizeDate(candidate.workDate) === date) ?? entriesByDate.get(date)
               const timeOff = timeOffByDate.get(date)
               const calc = entry ? calculateDay(entry, member) : null
               const occurrence = timeOff ? (timeOff.requestType === "full_day" ? "FC" : "HC") : entry ? occurrenceCodes[entry.occurrenceType] ?? "" : ""
@@ -145,7 +145,7 @@ export default async function ColaboradorPage({
               const dailyBankUsage = entry ? adjustments.filter((adjustment) => normalizeDate(adjustment.workDate) === date && adjustment.minutes < 0 && /banco|compensat|sa[ií]da antecipada|entrada compensada|uso/i.test(adjustment.description ?? "")).reduce((total, adjustment) => total + Math.abs(adjustment.minutes), 0) : 0
               const note = timeOff ? (timeOff.requestType === "full_day" ? "FC — Folga" : "HC — Hora comp.") : occurrenceLabels[entry?.occurrenceType ?? ""] || dayLabel
               const rubric = [timeOff ? note : occurrence || note, dailyBankUsage > 0 ? `Banco -${formatMinutes(dailyBankUsage)}` : ""].filter(Boolean).join(" · ")
-              const isApprovedTimeOffWithoutEntry = Boolean(timeOff && !entry)
+              const isApprovedTimeOffWithoutEntry = !entry && Boolean(timeOff)
               const compensatedDeficit = calc && dailyBankUsage > 0 ? Math.min(calc.deficitMinutes, dailyBankUsage) : 0
               const displayedBalance = calc ? calc.balanceMinutes + compensatedDeficit : 0
               return <tr key={date}><td>{String(day).padStart(2, "0")}</td><td>{isApprovedTimeOffWithoutEntry ? "—" : formatTime(entry?.clockIn)}</td><td>{isApprovedTimeOffWithoutEntry ? "—" : formatTime(entry?.lunchStart)}</td><td>{isApprovedTimeOffWithoutEntry ? "—" : formatTime(entry?.lunchEnd)}</td><td>{isApprovedTimeOffWithoutEntry ? "—" : formatTime(entry?.clockOut)}</td><td>{rubric && <small className="print-sheet-note">{rubric}</small>}</td><td>{calc?.complete && displayedBalance > 0 ? formatMinutes(displayedBalance) : calc?.complete && displayedBalance < 0 ? `-${formatMinutes(Math.abs(displayedBalance))}` : timeOff?.status === "approved" && !entry ? "Compensada" : ""}</td><td></td></tr>
