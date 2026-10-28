@@ -70,8 +70,8 @@ export default async function ColaboradorPage({
   const adjustments = allAdjustments.filter((adjustment) => inRange(adjustment, sinceISO, untilISO))
   const previousAdjustments = allAdjustments.filter((adjustment) => adjustmentPeriodDate(adjustment) < sinceISO)
   const previousBalance = aggregateDays(previousEntries, { ...member, previousBalanceMinutes: 0 }, []).totalOvertime
-  const monthlyTimeOffRequests = timeOffRequests.filter((request) => request.status === "approved" && request.workDate >= sinceISO && request.workDate <= untilISO)
-  const timeOffByDate = new Map(monthlyTimeOffRequests.filter((request) => request.status === "approved").map((request) => [request.workDate, request]))
+  const monthlyTimeOffRequests = timeOffRequests.filter((request) => request.status === "approved" && normalizeDate(request.workDate) >= sinceISO && normalizeDate(request.workDate) <= untilISO)
+  const timeOffByDate = new Map(monthlyTimeOffRequests.map((request) => [normalizeDate(request.workDate), request]))
   const totals = aggregateDays(entries, { ...member, previousBalanceMinutes: previousBalance }, adjustments)
   const scheduled = scheduledMinutesForStaff(member)
   // "2024-01-06" é um sábado — usado só para calcular a carga de sábado.
@@ -83,7 +83,7 @@ export default async function ColaboradorPage({
     year: "numeric",
   }).format(new Date(Date.UTC(year, month - 1, 1, 12)))
   const daysInMonth = new Date(Date.UTC(year, month, 0)).getUTCDate()
-  const entriesByDate = new Map(entries.map((entry) => [entry.workDate, entry]))
+  const entriesByDate = new Map(entries.map((entry) => [normalizeDate(entry.workDate), entry]))
   const occurrenceCodes: Record<string, string> = { holiday: "FER", justified_absence: "FJ", unjustified_absence: "FI", medical_certificate: "AT", compensatory_day_off: "FC", early_departure: "SA", compensatory_early_departure: "SAC" }
 
   return (
