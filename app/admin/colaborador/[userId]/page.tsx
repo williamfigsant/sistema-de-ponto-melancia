@@ -69,7 +69,17 @@ export default async function ColaboradorPage({
   }
   const adjustments = allAdjustments.filter((adjustment) => inRange(adjustment, sinceISO, untilISO))
   const previousAdjustments = allAdjustments.filter((adjustment) => adjustmentPeriodDate(adjustment) < sinceISO)
-  const previousBalance = aggregateDays(previousEntries, { ...member, previousBalanceMinutes: 0 }, []).totalOvertime
+  const carryoverStart = `${selectedYear}-09-01`
+  const carryoverEntries = previousEntries.filter((entry) => {
+    const date = normalizeDate(entry.workDate)
+    return date >= carryoverStart && date < sinceISO
+  })
+  const carryoverAdjustments = previousAdjustments.filter((adjustment) => {
+    const date = adjustmentPeriodDate(adjustment)
+    return date >= carryoverStart && date < sinceISO
+  })
+  const carryoverBalance = aggregateDays(carryoverEntries, { ...member, previousBalanceMinutes: 0 }, carryoverAdjustments).totalBalance
+  const previousBalance = member.previousBalanceMinutes + carryoverBalance
   const monthlyTimeOffRequests = timeOffRequests.filter((request) => request.status === "approved" && normalizeDate(request.workDate) >= sinceISO && normalizeDate(request.workDate) <= untilISO)
   const timeOffByDate = new Map(monthlyTimeOffRequests.map((request) => [normalizeDate(request.workDate), request]))
   const totals = aggregateDays(entries, { ...member, previousBalanceMinutes: previousBalance }, adjustments)
@@ -147,7 +157,7 @@ export default async function ColaboradorPage({
               const rubric = [timeOff ? note : occurrence || note, dailyBankUsage > 0 ? `Banco -${formatMinutes(dailyBankUsage)}` : ""].filter(Boolean).join(" · ")
               const isApprovedTimeOffWithoutEntry = !entry && Boolean(timeOff)
               const compensatedDeficit = calc && dailyBankUsage > 0 ? Math.min(calc.deficitMinutes, dailyBankUsage) : 0
-              const displayedBalance = calc ? calc.balanceMinutes + compensatedDeficit : 0
+              const displayedBalance = calc ? (dailyBankUsage > 0 && calc.deficitMinutes > 0 ? Math.max(0, calc.balanceMinutes + compensatedDeficit) : calc.balanceMinutes) : 0
               return <tr key={date}><td>{String(day).padStart(2, "0")}</td><td>{isApprovedTimeOffWithoutEntry ? "—" : formatTime(entry?.clockIn)}</td><td>{isApprovedTimeOffWithoutEntry ? "—" : formatTime(entry?.lunchStart)}</td><td>{isApprovedTimeOffWithoutEntry ? "—" : formatTime(entry?.lunchEnd)}</td><td>{isApprovedTimeOffWithoutEntry ? "—" : formatTime(entry?.clockOut)}</td><td>{rubric && <small className="print-sheet-note">{rubric}</small>}</td><td>{calc?.complete && displayedBalance > 0 ? formatMinutes(displayedBalance) : calc?.complete && displayedBalance < 0 ? `-${formatMinutes(Math.abs(displayedBalance))}` : timeOff?.status === "approved" && !entry ? "Compensada" : ""}</td><td></td></tr>
             })}</tbody>
           </table>
