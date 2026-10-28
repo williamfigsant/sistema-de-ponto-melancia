@@ -69,7 +69,17 @@ export default async function ColaboradorPage({
   }
   const adjustments = allAdjustments.filter((adjustment) => inRange(adjustment, sinceISO, untilISO))
   const previousAdjustments = allAdjustments.filter((adjustment) => adjustmentPeriodDate(adjustment) < sinceISO)
-  const previousBalance = aggregateDays(previousEntries, { ...member, previousBalanceMinutes: 0 }, []).totalOvertime
+  const carryoverStart = `${selectedYear}-09-01`
+  const carryoverEntries = previousEntries.filter((entry) => {
+    const date = normalizeDate(entry.workDate)
+    return date >= carryoverStart && date < sinceISO
+  })
+  const carryoverAdjustments = previousAdjustments.filter((adjustment) => {
+    const date = adjustmentPeriodDate(adjustment)
+    return date >= carryoverStart && date < sinceISO
+  })
+  const carryoverBalance = aggregateDays(carryoverEntries, { ...member, previousBalanceMinutes: 0 }, carryoverAdjustments).totalBalance
+  const previousBalance = member.previousBalanceMinutes + carryoverBalance
   const monthlyTimeOffRequests = timeOffRequests.filter((request) => request.status === "approved" && normalizeDate(request.workDate) >= sinceISO && normalizeDate(request.workDate) <= untilISO)
   const timeOffByDate = new Map(monthlyTimeOffRequests.map((request) => [normalizeDate(request.workDate), request]))
   const totals = aggregateDays(entries, { ...member, previousBalanceMinutes: previousBalance }, adjustments)
