@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { deleteTimeAdjustment, updateTimeAdjustment } from "@/app/actions/admin"
 import type { TimeAdjustment } from "@/lib/db/schema"
-import { formatMinutes } from "@/lib/time-utils"
+import { formatMinutes, isBankUsageAdjustment } from "@/lib/time-utils"
 
 export function TimeAdjustmentsTable({ adjustments, staffId }: { adjustments: TimeAdjustment[]; staffId: number }) {
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -17,7 +17,7 @@ export function TimeAdjustmentsTable({ adjustments, staffId }: { adjustments: Ti
 
       if (!isEditing) return <div key={adjustment.id} className="flex items-center justify-between gap-3 rounded-lg border bg-background p-3">
         <div className="min-w-0">
-          <p className="text-sm font-medium"><span className={adjustment.minutes < 0 ? "text-destructive" : "text-emerald-700"}>{adjustment.minutes < 0 ? "Débito" : "Crédito"}</span>: {formatMinutes(absolute)}</p>
+          <p className="text-sm font-medium"><span className={adjustment.minutes >= 0 ? "text-emerald-700" : isBankUsageAdjustment(adjustment) ? "text-amber-600" : "text-destructive"}>{adjustment.minutes >= 0 ? "Crédito" : isBankUsageAdjustment(adjustment) ? "Uso do banco" : "Débito"}</span>: {formatMinutes(absolute)}</p>
           <p className="truncate text-xs text-muted-foreground">{adjustment.workDate ? `${adjustment.workDate} · ` : ""}{adjustment.description}</p>
         </div>
         <button type="button" className="shrink-0 rounded-md border px-3 py-1.5 text-sm hover:bg-muted" onClick={() => setEditingId(adjustment.id)}>Editar</button>

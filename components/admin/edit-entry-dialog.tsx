@@ -16,9 +16,9 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import type { TimeAdjustment, TimeEntry } from "@/lib/db/schema"
-import { formatMinutes, toTimeInputValue } from "@/lib/time-utils"
+import { formatMinutes, isBankUsageAdjustment, toTimeInputValue } from "@/lib/time-utils"
 import { useRouter } from "next/navigation"
-import { useTransition } from "react"
+import { useState, useTransition } from "react"
 import { toast } from "sonner"
 
 export function EditEntryDialog({
@@ -37,6 +37,7 @@ export function EditEntryDialog({
   onOpenChange: (open: boolean) => void
 }) {
   const router = useRouter()
+  const [occurrenceType, setOccurrenceType] = useState(entry?.occurrenceType ?? "normal")
   const [isPending, startTransition] = useTransition()
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -56,16 +57,18 @@ export function EditEntryDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={(nextOpen) => { if (!nextOpen) setOccurrenceType(entry?.occurrenceType ?? "normal"); onOpenChange(nextOpen) }}>
       <DialogContent className="w-[calc(100%-2rem)] max-w-2xl max-h-[90vh] overflow-y-auto">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
             <DialogTitle>Editar registro</DialogTitle>
-            <DialogDescription>Corrija a data, horários e ocorrência deste lançamento.</DialogDescription>
+            <DialogDescription>Corrija a data, horários e ocorrência. Folgas compensatórias não usam marcações de horário.</DialogDescription>
           </DialogHeader>
 
           <div className="grid gap-1.5 py-4"><Label htmlFor="editWorkDate">Data</Label><Input id="editWorkDate" name="workDate" type="date" defaultValue={workDate} required /></div>
-          <div className="grid grid-cols-2 gap-3 pb-4">
+          {occurrenceType === "compensatory_day_off" ? (
+            <p className="mb-4 rounded-md bg-muted px-3 py-2 text-sm text-muted-foreground">Folga compensatória: as marcações de horário são ignoradas e a jornada prevista será descontada do saldo acumulado.</p>
+          ) : <div className="grid grid-cols-2 gap-3 pb-4">
             <div className="grid gap-1.5">
               <Label htmlFor="clockIn" className="text-xs">
                 Entrada
@@ -110,11 +113,11 @@ export function EditEntryDialog({
                 defaultValue={toTimeInputValue(entry?.lunchEnd ?? null)}
               />
             </div>
-          </div>
+          </div>}
 
           <div className="grid gap-1.5 pb-4">
             <Label htmlFor="occurrenceType">Ocorrência do dia</Label>
-            <Select name="occurrenceType" defaultValue={entry?.occurrenceType ?? "normal"} itemToStringLabel={(value) => ({ normal: "Normal", holiday: "Feriado", justified_absence: "Falta justificada", unjustified_absence: "Falta injustificada", medical_certificate: "Atestado", compensatory_day_off: "Folga compensatória", early_departure: "Saída antecipada", compensatory_early_departure: "Saída antecipada compensatória", compensatory_late_entry: "Entrada compensada" }[String(value)] ?? "Normal")}>
+            <Select name="occurrenceType" value={occurrenceType} onValueChange={(value) => setOccurrenceType(String(value ?? "normal"))} itemToStringLabel={(value) => ({ normal: "Normal", holiday: "Feriado", justified_absence: "Falta justificada", unjustified_absence: "Falta injustificada", medical_certificate: "Atestado", compensatory_day_off: "Folga compensatória", early_departure: "Saída antecipada", compensatory_early_departure: "Saída antecipada compensatória", compensatory_late_entry: "Entrada compensada" }[String(value)] ?? "Normal")}>
               <SelectTrigger id="occurrenceType"><SelectValue placeholder="Selecione" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="normal">Normal</SelectItem>
@@ -138,8 +141,8 @@ export function EditEntryDialog({
                 {adjustments.map((adjustment) => (
                   <div key={adjustment.id} className="flex items-start justify-between gap-3 rounded-md border border-border/70 bg-background px-3 py-2 text-sm">
                     <div className="min-w-0">
-                      <p className={adjustment.minutes < 0 ? "font-medium text-destructive" : "font-medium text-primary"}>
-                        {adjustment.minutes < 0 ? "Débito" : "Crédito"}: {formatMinutes(Math.abs(adjustment.minutes))}
+                      <p className={adjustment.minutes >= 0 ? "font-medium text-primary" : isBankUsageAdjustment(adjustment) ? "font-medium text-amber-600" : "font-medium text-destructive"}>
+                        {adjustment.minutes >= 0 ? "Crédito" : isBankUsageAdjustment(adjustment) ? "Uso do banco" : "Débito"}: {formatMinutes(Math.abs(adjustment.minutes))}
                       </p>
                       <p className="truncate text-xs text-muted-foreground">{adjustment.description || "Sem descrição"}</p>
                     </div>

@@ -31,6 +31,7 @@ import { toast } from "sonner"
 export function AddEntryDialog({ member }: { member: Staff }) {
   const router = useRouter()
   const [open, setOpen] = useState(false)
+  const [occurrenceType, setOccurrenceType] = useState("normal")
   const [isPending, startTransition] = useTransition()
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -50,7 +51,7 @@ export function AddEntryDialog({ member }: { member: Staff }) {
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={(nextOpen) => { setOpen(nextOpen); if (!nextOpen) setOccurrenceType("normal") }}>
       <DialogTrigger render={<Button variant="outline" size="sm" />}>
         <CalendarPlus className="size-4" />
         Lançar registro
@@ -60,8 +61,7 @@ export function AddEntryDialog({ member }: { member: Staff }) {
           <DialogHeader>
             <DialogTitle>Lançar registro</DialogTitle>
             <DialogDescription>
-              Registro manual de ponto para {member.name}. Preencha a data e os
-              horários.
+              Registro manual de ponto para {member.name}. Em folga compensatória, as marcações de horário não são necessárias.
             </DialogDescription>
           </DialogHeader>
 
@@ -79,7 +79,9 @@ export function AddEntryDialog({ member }: { member: Staff }) {
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            {occurrenceType === "compensatory_day_off" ? (
+              <p className="rounded-md bg-muted px-3 py-2 text-sm text-muted-foreground">Folga compensatória: não são necessárias marcações. A jornada prevista será descontada do saldo acumulado.</p>
+            ) : <div className="grid grid-cols-2 gap-3">
               <div className="grid gap-1.5">
                 <Label htmlFor="clockIn" className="text-xs">
                   Entrada
@@ -124,12 +126,12 @@ export function AddEntryDialog({ member }: { member: Staff }) {
                   defaultValue={member.lunchEnd ?? ""}
                 />
               </div>
-            </div>
+            </div>}
           </div>
 
           <div className="grid gap-2 pb-4">
             <Label htmlFor="occurrenceType">Tipo de registro</Label>
-            <Select name="occurrenceType" defaultValue="normal" itemToStringLabel={(value) => ({ normal: "Registro normal", holiday: "Feriado", justified_absence: "Falta justificada", unjustified_absence: "Falta injustificada", medical_certificate: "Atestado / comparecimento médico", compensatory_day_off: "Folga compensatória", early_departure: "Saída antecipada", compensatory_early_departure: "Saída antecipada compensatória", compensatory_late_entry: "Entrada compensada" }[String(value)] ?? "Registro normal")}><SelectTrigger id="occurrenceType"><SelectValue /></SelectTrigger><SelectContent>
+            <Select name="occurrenceType" value={occurrenceType} onValueChange={(value) => setOccurrenceType(String(value ?? "normal"))} itemToStringLabel={(value) => ({ normal: "Registro normal", holiday: "Feriado", justified_absence: "Falta justificada", unjustified_absence: "Falta injustificada", medical_certificate: "Atestado / comparecimento médico", compensatory_day_off: "Folga compensatória", early_departure: "Saída antecipada", compensatory_early_departure: "Saída antecipada compensatória", compensatory_late_entry: "Entrada compensada" }[String(value)] ?? "Registro normal")}><SelectTrigger id="occurrenceType"><SelectValue /></SelectTrigger><SelectContent>
               <SelectItem value="normal">Registro normal</SelectItem><SelectItem value="holiday">Feriado</SelectItem><SelectItem value="justified_absence">Falta justificada</SelectItem><SelectItem value="unjustified_absence">Falta injustificada</SelectItem><SelectItem value="medical_certificate">Atestado / comparecimento médico</SelectItem><SelectItem value="compensatory_day_off">Folga compensatória</SelectItem><SelectItem value="early_departure">Saída antecipada</SelectItem><SelectItem value="compensatory_early_departure">Saída antecipada compensatória</SelectItem><SelectItem value="compensatory_late_entry">Entrada compensada</SelectItem>
             </SelectContent></Select>
             <Label htmlFor="occurrenceNote">Observação / horas abonadas</Label><Input id="occurrenceNote" name="occurrenceNote" placeholder="Ex.: comparecimento médico — 2h abonadas" />

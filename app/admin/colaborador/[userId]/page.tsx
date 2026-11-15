@@ -28,6 +28,7 @@ import {
   formatTime,
   nowBR,
   scheduledMinutesForStaff,
+  isBankUsageAdjustment,
 } from "@/lib/time-utils"
 import { ArrowLeft } from "lucide-react"
 import Link from "next/link"
@@ -104,7 +105,7 @@ export default async function ColaboradorPage({
         <Card>
           <CardHeader>
             <CardTitle className="text-lg">Lançar ajuste no banco de horas</CardTitle>
-            <CardDescription>Informe horas e minutos para adicionar crédito ou débito manual.</CardDescription>
+            <CardDescription>Para folga, lance como débito e inclua “folga” no motivo: será abatida do banco, sem gerar débito de jornada.</CardDescription>
           </CardHeader>
           <CardContent>
             <form action={createTimeAdjustment} className="grid gap-3 sm:grid-cols-[1fr_1fr_1fr_2fr_auto] sm:items-end">
@@ -152,13 +153,13 @@ export default async function ColaboradorPage({
               const weekday = new Date(`${date}T12:00:00Z`).getUTCDay()
               const dayLabel = weekday === 0 ? "DOM" : ""
               const occurrenceLabels: Record<string, string> = { holiday: "FER", justified_absence: "FJ", medical_certificate: "AT", early_departure: "SA", compensatory_early_departure: "SAC", compensatory_leave: "FC", day_off: "FC" }
-              const dailyBankUsage = entry ? adjustments.filter((adjustment) => normalizeDate(adjustment.workDate) === date && adjustment.minutes < 0 && /banco|compensat|sa[ií]da antecipada|entrada compensada|uso/i.test(adjustment.description ?? "")).reduce((total, adjustment) => total + Math.abs(adjustment.minutes), 0) : 0
+              const dailyBankUsage = entry ? Math.max(calc?.usedFromBankMinutes ?? 0, adjustments.filter((adjustment) => normalizeDate(adjustment.workDate) === date && isBankUsageAdjustment(adjustment)).reduce((total, adjustment) => total + Math.abs(adjustment.minutes), 0)) : 0
               const note = timeOff ? (timeOff.requestType === "full_day" ? "FC — Folga" : "HC — Hora comp.") : occurrenceLabels[entry?.occurrenceType ?? ""] || dayLabel
               const rubric = [timeOff ? note : occurrence || note, dailyBankUsage > 0 ? `Banco -${formatMinutes(dailyBankUsage)}` : ""].filter(Boolean).join(" · ")
               const isApprovedTimeOffWithoutEntry = !entry && Boolean(timeOff)
               const compensatedDeficit = calc && dailyBankUsage > 0 ? Math.min(calc.deficitMinutes, dailyBankUsage) : 0
               const displayedBalance = calc ? (dailyBankUsage > 0 && calc.deficitMinutes > 0 ? Math.max(0, calc.balanceMinutes + compensatedDeficit) : calc.balanceMinutes) : 0
-              return <tr key={date}><td>{String(day).padStart(2, "0")}</td><td>{isApprovedTimeOffWithoutEntry ? "—" : formatTime(entry?.clockIn)}</td><td>{isApprovedTimeOffWithoutEntry ? "—" : formatTime(entry?.lunchStart)}</td><td>{isApprovedTimeOffWithoutEntry ? "—" : formatTime(entry?.lunchEnd)}</td><td>{isApprovedTimeOffWithoutEntry ? "—" : formatTime(entry?.clockOut)}</td><td>{rubric && <small className="print-sheet-note">{rubric}</small>}</td><td>{calc?.complete && displayedBalance > 0 ? formatMinutes(displayedBalance) : calc?.complete && displayedBalance < 0 ? `-${formatMinutes(Math.abs(displayedBalance))}` : timeOff?.status === "approved" && !entry ? "Compensada" : ""}</td><td></td></tr>
+              return <tr key={date}><td>{String(day).padStart(2, "0")}</td><td>{isApprovedTimeOffWithoutEntry || entry?.occurrenceType === "compensatory_day_off" ? "—" : formatTime(entry?.clockIn)}</td><td>{isApprovedTimeOffWithoutEntry || entry?.occurrenceType === "compensatory_day_off" ? "—" : formatTime(entry?.lunchStart)}</td><td>{isApprovedTimeOffWithoutEntry || entry?.occurrenceType === "compensatory_day_off" ? "—" : formatTime(entry?.lunchEnd)}</td><td>{isApprovedTimeOffWithoutEntry || entry?.occurrenceType === "compensatory_day_off" ? "—" : formatTime(entry?.clockOut)}</td><td>{rubric && <small className="print-sheet-note">{rubric}</small>}</td><td>{calc?.complete && displayedBalance > 0 ? formatMinutes(displayedBalance) : calc?.complete && displayedBalance < 0 ? `-${formatMinutes(Math.abs(displayedBalance))}` : timeOff?.status === "approved" && !entry ? "Compensada" : ""}</td><td></td></tr>
             })}</tbody>
           </table>
           <div className="print-sheet-signature"><b>Assinatura do empregado:</b><span /></div>

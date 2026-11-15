@@ -8,7 +8,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import type { Staff, TimeAdjustment, TimeEntry } from "@/lib/db/schema"
-import { calculateDay, formatDateBR, formatMinutes, formatTime } from "@/lib/time-utils"
+import { calculateDay, formatDateBR, formatMinutes, formatTime, isBankUsageAdjustment } from "@/lib/time-utils"
 
 export function HistoryTable({
   entries,
@@ -43,8 +43,13 @@ export function HistoryTable({
         <TableBody>
           {entries.map((entry) => {
             const calc = calculateDay(entry, member)
-            const dailyAdjustment = adjustments.filter((adjustment) => adjustment.workDate === entry.workDate).reduce((total, adjustment) => total + Math.abs(adjustment.minutes), 0)
-            const displayedBalance = calc.balanceMinutes + dailyAdjustment
+            const isCompensatoryDayOff = entry.occurrenceType === "compensatory_day_off"
+            const dayAdjustments = adjustments.filter((adjustment) => String(adjustment.workDate ?? "").slice(0, 10) === String(entry.workDate).slice(0, 10))
+            const bankAdjustment = dayAdjustments.filter(isBankUsageAdjustment).reduce((total, adjustment) => total + Math.abs(adjustment.minutes), 0)
+            const coveredDeficit = Math.min(calc.deficitMinutes, bankAdjustment)
+            const otherAdjustments = dayAdjustments.filter((adjustment) => !isBankUsageAdjustment(adjustment)).reduce((total, adjustment) => total + adjustment.minutes, 0)
+            const displayedBalance = calc.balanceMinutes + coveredDeficit + otherAdjustments
+            const dailyBankUsage = Math.max(calc.usedFromBankMinutes, bankAdjustment)
             return (
               <TableRow key={entry.id}>
                 <TableCell className="font-medium">
@@ -57,27 +62,21 @@ export function HistoryTable({
                     )}
                   </span>
                 </TableCell>
-                <TableCell className="tabular-nums">{formatTime(entry.clockIn)}</TableCell>
+                <TableCell className="tabular-nums">{isCompensatoryDayOff ? "—" : formatTime(entry.clockIn)}</TableCell>
                 <TableCell className="tabular-nums text-muted-foreground">
-                  {formatTime(entry.lunchStart)} - {formatTime(entry.lunchEnd)}
+                  {isCompensatoryDayOff ? "—" : `${formatTime(entry.lunchStart)} - ${formatTime(entry.lunchEnd)}`}
                 </TableCell>
-                <TableCell className="tabular-nums">{formatTime(entry.clockOut)}</TableCell>
+                <TableCell className="tabular-nums">{isCompensatoryDayOff ? "—" : formatTime(entry.clockOut)}</TableCell>
                 <TableCell className="text-right tabular-nums">
                   {calc.complete ? <div><div>{formatMinutes(calc.workedMinutes)}</div>{(calc.totalVariacoes > 0 || calc.alertas.length > 0) && <div className="text-[10px] text-muted-foreground">Auditoria de marcações: {calc.totalVariacoes}min · tolerados: {calc.minutosTolerados}min · excedente do intervalo: {calc.intervalo.excedente}min · status: {calc.intervalo.status.toLowerCase().replaceAll("_", " ")}{calc.alertas.length > 0 ? ` · ${calc.alertas.join(", ")}` : ""}</div>}</div> : "--"}
                 </TableCell>
                 <TableCell className="text-right tabular-nums">
                   {calc.complete ? (
-                    <span
-                      className={
-                        displayedBalance > 0
-                          ? "font-medium text-primary"
-                          : displayedBalance < 0
-                            ? "font-medium text-destructive"
-                            : "text-muted-foreground"
-                      }
-                    >
-                      {formatMinutes(displayedBalance, true)}
-                    </span>
+                    <div className="flex flex-col items-end">
+                      {dailyBankUsage > 0 && <span className="font-medium text-amber-600">−{formatMinutes(dailyBankUsage)} do banco</span>}
+                      {displayedBalance !== 0 && <span className={displayedBalance > 0 ? "font-medium text-primary" : "font-medium text-destructive"}>{formatMinutes(displayedBalance, true)} saldo do dia</span>}
+                      {dailyBankUsage === 0 && displayedBalance === 0 && <span className="text-muted-foreground">+0h 00min</span>}
+                    </div>
                   ) : (
                     "--"
                   )}

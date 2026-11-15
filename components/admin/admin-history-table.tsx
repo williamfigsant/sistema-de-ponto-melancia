@@ -13,7 +13,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import type { Staff, TimeAdjustment, TimeEntry } from "@/lib/db/schema"
-import { calculateDay, formatDateBR, formatMinutes, formatTime } from "@/lib/time-utils"
+import { calculateDay, formatDateBR, formatMinutes, formatTime, isBankUsageAdjustment } from "@/lib/time-utils"
 import { Pencil, Trash2 } from "lucide-react"
 import { useTransition } from "react"
 import { useState } from "react"
@@ -56,11 +56,12 @@ export function AdminHistoryTable({
           <TableBody>
             {entries.map((entry) => {
               const calc = calculateDay(entry, member)
-              const dailyAdjustments = adjustments.filter((adjustment) => String(adjustment.workDate ?? "").slice(0, 10) === entry.workDate)
-              const dailyDebit = dailyAdjustments.filter((adjustment) => adjustment.minutes < 0).reduce((total, adjustment) => total + Math.abs(adjustment.minutes), 0)
-              const coveredDeficit = Math.min(calc.deficitMinutes, dailyDebit)
+              const isCompensatoryDayOff = entry.occurrenceType === "compensatory_day_off"
+              const dailyAdjustments = adjustments.filter((adjustment) => String(adjustment.workDate ?? "").slice(0, 10) === String(entry.workDate).slice(0, 10))
+              const dailyBankDebit = dailyAdjustments.filter(isBankUsageAdjustment).reduce((total, adjustment) => total + Math.abs(adjustment.minutes), 0)
+              const coveredDeficit = Math.min(calc.deficitMinutes, dailyBankDebit)
               const displayedBalance = calc.balanceMinutes + coveredDeficit
-              const bankUsage = dailyDebit
+              const bankUsage = Math.max(calc.usedFromBankMinutes, dailyBankDebit)
               return (
                 <TableRow key={entry.id}>
                   <TableCell className="font-medium">
@@ -73,26 +74,18 @@ export function AdminHistoryTable({
                       )}
                     </span>
                   </TableCell>
-                  <TableCell className="tabular-nums">{formatTime(entry.clockIn)}</TableCell>
+                  <TableCell className="tabular-nums">{isCompensatoryDayOff ? "—" : formatTime(entry.clockIn)}</TableCell>
                   <TableCell className="tabular-nums text-muted-foreground">
-                    {formatTime(entry.lunchStart)} - {formatTime(entry.lunchEnd)}
+                    {isCompensatoryDayOff ? "—" : `${formatTime(entry.lunchStart)} - ${formatTime(entry.lunchEnd)}`}
                   </TableCell>
-                  <TableCell className="tabular-nums">{formatTime(entry.clockOut)}</TableCell>
+                  <TableCell className="tabular-nums">{isCompensatoryDayOff ? "—" : formatTime(entry.clockOut)}</TableCell>
                   <TableCell className="text-right tabular-nums">
-                    {calc.complete ? <div><div>{formatMinutes(calc.workedMinutes)}</div>{(calc.totalVariacoes > 0 || calc.alertas.length > 0 || bankUsage > 0) && <div className="mt-1 flex flex-wrap items-center justify-end gap-1 text-[10px] text-muted-foreground">{bankUsage > 0 && <Badge variant="outline" className="border-amber-500/50 px-1.5 py-0 text-[9px] font-medium text-amber-500">{formatMinutes(bankUsage)} usada do banco</Badge>}<span>Auditoria: {calc.totalVariacoes} min · tolerados: {calc.minutosTolerados} min · intervalo excedente: {calc.intervalo.excedente} min · {calc.intervalo.status.toLowerCase().replaceAll("_", " ")}</span>{calc.alertas.map((alerta) => <Badge key={alerta} variant="outline" className="px-1.5 py-0 text-[9px] font-medium normal-case">{alerta === "INTERVALO_SUPERIOR_AO_PREVISTO" ? "Intervalo superior ao previsto" : alerta === "ALERTA_DE_INTERVALO_IRREGULAR" ? "Intervalo irregular" : alerta}</Badge>)}</div>}</div> : "--"}
+                    {calc.complete ? <div><div>{formatMinutes(calc.workedMinutes)}</div>{(calc.totalVariacoes > 0 || calc.alertas.length > 0 || bankUsage > 0) && <div className="mt-1 flex flex-wrap items-center justify-end gap-1 text-[10px] text-muted-foreground">{bankUsage > 0 && <Badge variant="outline" className="border-amber-500/50 px-1.5 py-0 text-[9px] font-medium text-amber-600">{formatMinutes(bankUsage)} usada do banco</Badge>}{!isCompensatoryDayOff && <span>Auditoria: {calc.totalVariacoes} min · tolerados: {calc.minutosTolerados} min · intervalo excedente: {calc.intervalo.excedente} min · {calc.intervalo.status.toLowerCase().replaceAll("_", " ")}</span>}{calc.alertas.map((alerta) => <Badge key={alerta} variant="outline" className="px-1.5 py-0 text-[9px] font-medium normal-case">{alerta === "INTERVALO_SUPERIOR_AO_PREVISTO" ? "Intervalo superior ao previsto" : alerta === "ALERTA_DE_INTERVALO_IRREGULAR" ? "Intervalo irregular" : alerta}</Badge>)}</div>}</div> : "--"}
                   </TableCell>
                   <TableCell className="text-right tabular-nums">
                     {calc.complete ? (
-                      <span
-                        className={
-                          displayedBalance > 0
-                            ? "font-medium text-primary"
-                            : displayedBalance < 0
-                              ? "font-medium text-destructive"
-                              : "text-muted-foreground"
-                        }
-                      >
-                        {formatMinutes(displayedBalance, true)}
+                      <span className={bankUsage > 0 ? "font-medium text-amber-600" : displayedBalance > 0 ? "font-medium text-primary" : displayedBalance < 0 ? "font-medium text-destructive" : "text-muted-foreground"}>
+                        {bankUsage > 0 ? `−${formatMinutes(bankUsage)} do banco${displayedBalance !== 0 ? ` · saldo diário ${formatMinutes(displayedBalance, true)}` : ""}` : formatMinutes(displayedBalance, true)}
                       </span>
                     ) : (
                       "--"
