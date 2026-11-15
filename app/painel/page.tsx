@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/card"
 import { getEntriesForUser, getEntryForDay, getTimeAdjustments, getTimeOffRequestsForUser } from "@/lib/queries"
 import { getCurrentStaff } from "@/lib/session"
-import { aggregateDays, formatMinutes, scheduledMinutesForStaff, todayISO } from "@/lib/time-utils"
+import { aggregateDays, currentMonthStartISO, formatMinutes, scheduledMinutesForStaff, todayISO } from "@/lib/time-utils"
 import { redirect } from "next/navigation"
 
 export default async function PainelPage() {
@@ -24,19 +24,22 @@ export default async function PainelPage() {
 
   const today = todayISO()
 
-  // Últimos 30 dias.
-  const since = new Date()
-  since.setDate(since.getDate() - 30)
-  const sinceISO = since.toISOString().slice(0, 10)
+  const monthStartISO = currentMonthStartISO()
 
-  const [todayEntry, entries, adjustments, timeOffRequests] = await Promise.all([
+  const [todayEntry, entries, allAdjustments, timeOffRequests] = await Promise.all([
     getEntryForDay(profile.userId, today),
-    getEntriesForUser(profile.userId, sinceISO),
+    getEntriesForUser(profile.userId, monthStartISO, today),
     getTimeAdjustments(profile.id),
     getTimeOffRequestsForUser(profile.userId),
   ])
 
+  const adjustmentDate = (value: Date | string | null) => value ? (value instanceof Date ? value.toISOString() : String(value)).slice(0, 10) : ""
+  const adjustments = allAdjustments.filter((adjustment) => {
+    const date = adjustmentDate(adjustment.workDate ?? adjustment.createdAt)
+    return date >= monthStartISO && date <= today
+  })
   const totals = aggregateDays(entries, profile, adjustments)
+  const monthlyCredits = totals.totalOvertime + adjustments.reduce((sum, adjustment) => sum + Math.max(0, adjustment.minutes), 0)
   const scheduled = scheduledMinutesForStaff(profile)
   // "2024-01-06" é um sábado — usado só para calcular a carga de sábado.
   const scheduledSaturday = scheduledMinutesForStaff(profile, "2024-01-06")
@@ -70,14 +73,17 @@ export default async function PainelPage() {
         <SummaryCards
           totalWorked={totals.totalWorked}
           totalOvertime={totals.totalOvertime}
-  totalDeficit={totals.totalDeficit}
-  totalUsedFromBank={totals.totalUsedFromBank}
-  daysCompleted={totals.daysCompleted}
+          totalDeficit={totals.totalDeficit}
+          totalUsedFromBank={totals.totalUsedFromBank}
+          daysCompleted={totals.daysCompleted}
+          previousBalance={profile.previousBalanceMinutes}
+          totalBankBalance={totals.totalBalance}
+          monthlyCredits={monthlyCredits}
         />
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Histórico (últimos 30 dias)</CardTitle>
+            <CardTitle className="text-lg">              Histórico do mês</CardTitle>
             <CardDescription>
               Você não pode editar os registros. Em caso de erro, fale com o
               administrador.
