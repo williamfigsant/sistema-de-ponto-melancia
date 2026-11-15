@@ -69,7 +69,7 @@ export default async function ColaboradorPage({
   }
   const adjustments = allAdjustments.filter((adjustment) => inRange(adjustment, sinceISO, untilISO))
   const previousAdjustments = allAdjustments.filter((adjustment) => adjustmentPeriodDate(adjustment) < sinceISO)
-  const carryoverStart = `${selectedYear}-09-01`
+  const carryoverStart = "2026-11-01"
   const carryoverEntries = previousEntries.filter((entry) => {
     const date = normalizeDate(entry.workDate)
     return date >= carryoverStart && date < sinceISO
@@ -236,9 +236,10 @@ export default async function ColaboradorPage({
   totalDeficit={totals.totalDeficit}
   totalUsedFromBank={totals.totalUsedFromBank}
             daysCompleted={totals.daysCompleted}
-            previousBalance={previousBalance}
-            totalBankBalance={totals.totalBalance}
-          />
+              previousBalance={previousBalance}
+              totalBankBalance={totals.totalBalance}
+              monthlyCredits={totals.totalOvertime + adjustments.reduce((sum, adjustment) => sum + Math.max(0, adjustment.minutes), 0)}
+            />
         </div>
 
         <Card className="print-hidden">
