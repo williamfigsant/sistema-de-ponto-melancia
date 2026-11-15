@@ -23,11 +23,11 @@
 .monthly-report-table th, .monthly-report-table td { border: 1px solid #9ca3af; padding: 4px 5px; vertical-align: top; font-family: Arial, sans-serif; font-size: inherit; line-height: 1.2; }
 .monthly-report-table th { background: #f3f4f6; text-transform: uppercase; font-weight: 700; text-align: center; }
 .monthly-report-table th:nth-child(1), .monthly-report-table td:nth-child(1) { width: 8%; }
-.monthly-report-table th:nth-child(2), .monthly-report-table td:nth-child(2) { width: 20%; }
-.monthly-report-table th:nth-child(3), .monthly-report-table td:nth-child(3) { width: 13%; }
-.monthly-report-table th:nth-child(4), .monthly-report-table td:nth-child(4) { width: 11%; }
-.monthly-report-table th:nth-child(5), .monthly-report-table td:nth-child(5), .monthly-report-table th:nth-child(6), .monthly-report-table td:nth-child(6) { width: 10%; }
-.monthly-report-table th:nth-child(7), .monthly-report-table td:nth-child(7) { width: 28%; }
+.monthly-report-table th:nth-child(2), .monthly-report-table td:nth-child(2) { width: 17%; }
+.monthly-report-table th:nth-child(3), .monthly-report-table td:nth-child(3) { width: 11%; }
+.monthly-report-table th:nth-child(4), .monthly-report-table td:nth-child(4) { width: 10%; }
+.monthly-report-table th:nth-child(5), .monthly-report-table td:nth-child(5), .monthly-report-table th:nth-child(6), .monthly-report-table td:nth-child(6), .monthly-report-table th:nth-child(7), .monthly-report-table td:nth-child(7) { width: 9%; }
+.monthly-report-table th:nth-child(8), .monthly-report-table td:nth-child(8) { width: 27%; }
 .monthly-report-table td:not(:last-child) { white-space: nowrap; }
 .monthly-report-table td:last-child { white-space: normal; overflow-wrap: anywhere; }
 .monthly-report-summary { margin-top: 12px; border: 1px solid #6b7280; padding: 8px; }

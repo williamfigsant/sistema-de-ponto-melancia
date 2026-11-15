@@ -109,7 +109,8 @@ export interface DayCalculation {
   lunchMinutes: number // minutos de almoço
   scheduledMinutes: number // jornada cadastrada (descontando almoço)
   overtimeMinutes: number // saldo positivo (horas extras)
-  deficitMinutes: number // saldo negativo (faltou)
+  deficitMinutes: number // saldo negativo de jornada (faltou)
+  usedFromBankMinutes: number // saldo acumulado utilizado em folgas compensatórias
   balanceMinutes: number // workedMinutes - scheduledMinutes
   complete: boolean // registro completo (entrada + saída)
   variacoesPorMarcacao: Array<{ nome: string; variacao: number; dentroDoLimite: boolean }>
@@ -199,30 +200,31 @@ export function calculateDay(entry: TimeEntry, member: Staff): DayCalculation {
   const intervaloDiferenca = Math.round((lunchMinutes - intervaloPrevisto) * 100) / 100
   const intervaloStatus = !lunchStart || !lunchEnd ? "SEM_INTERVALO" as const : intervaloDiferenca < -5 ? "REDUZIDO" as const : intervaloDiferenca > 0 ? "SUPERIOR_AO_PREVISTO" as const : "REGULAR" as const
   const isSaturday = isSaturdayISO(entry.workDate)
-  const alertas = [
+  const occurrence = entry.occurrenceType ?? "normal"
+  const alertas = occurrence === "compensatory_day_off" ? [] : [
     ...(intervaloStatus === "REDUZIDO" ? ["ALERTA_DE_INTERVALO_IRREGULAR"] : intervaloStatus === "SUPERIOR_AO_PREVISTO" ? ["INTERVALO_SUPERIOR_AO_PREVISTO"] : []),
     ...(isSaturday ? ["SABADO_JORNADA_NORMAL_4H"] : []),
   ]
   const grossMinutes = Math.max(0, diffMinutes(clockIn, clockOut))
-  const workedMinutes = Math.max(0, grossMinutes - lunchMinutes)
+  const workedMinutes = occurrence === "compensatory_day_off" ? 0 : Math.max(0, grossMinutes - lunchMinutes)
 
   const scheduledMinutes = isSaturday ? 4 * 60 : scheduledMinutesForStaff(member, entry.workDate)
-  const occurrence = entry.occurrenceType ?? "normal"
   const complete = Boolean(clockIn && clockOut) || occurrence !== "normal"
-  const absenceMinutes = occurrence === "unjustified_absence" || occurrence === "compensatory_day_off" ? scheduledMinutes : 0
+  const absenceMinutes = occurrence === "unjustified_absence" ? scheduledMinutes : 0
+  const usedFromBankMinutes = occurrence === "compensatory_day_off" ? scheduledMinutes : 0
   const creditedMinutes = occurrence === "medical_certificate" ? Math.min(scheduledMinutes, Number(entry.occurrenceNote?.match(/([0-9]+)\s*h/i)?.[1] ?? 0) * 60) : 0
   const scheduledIn = parseHHMM(scheduled.entry)
   const scheduledOut = parseHHMM(scheduled.exit)
   const actualIn = clockIn ? parseHHMM(formatTime(clockIn)) : null
   const actualOut = clockOut ? parseHHMM(formatTime(clockOut)) : null
   const saldoBruto = workedMinutes + creditedMinutes - scheduledMinutes
-  const tolerancia = scheduledIn !== null && scheduledOut !== null && actualIn !== null && actualOut !== null
+  const tolerancia = occurrence !== "compensatory_day_off" && scheduledIn !== null && scheduledOut !== null && actualIn !== null && actualOut !== null
     ? calcularToleranciaArt58({ marcacoes: [{ nome: "Entrada", prevista: scheduledIn, realizada: actualIn }, { nome: "Saída", prevista: scheduledOut, realizada: actualOut }], saldoBruto })
     : null
   const excedenteIntervalo = Math.round(Math.max(0, intervaloDiferenca) * 100) / 100
   const earlyDepartureMinutes = occurrence === "early_departure" || occurrence === "compensatory_early_departure" ? Math.max(0, scheduledMinutes - workedMinutes) : 0
   // workedMinutes já desconta o intervalo real. Não subtrair o excedente novamente.
-  const balanceMinutes = occurrence === "holiday" || occurrence === "justified_absence" || occurrence === "compensatory_late_entry" ? 0 : occurrence === "unjustified_absence" || occurrence === "compensatory_day_off" ? -absenceMinutes : occurrence === "medical_certificate" ? creditedMinutes - scheduledMinutes : complete ? (tolerancia?.saldoFinal ?? saldoBruto) - earlyDepartureMinutes : 0
+  const balanceMinutes = occurrence === "holiday" || occurrence === "justified_absence" || occurrence === "compensatory_day_off" || occurrence === "compensatory_late_entry" ? 0 : occurrence === "unjustified_absence" ? -absenceMinutes : occurrence === "medical_certificate" ? creditedMinutes - scheduledMinutes : complete ? (tolerancia?.saldoFinal ?? saldoBruto) - earlyDepartureMinutes : 0
 
   return {
     workedMinutes,
@@ -230,6 +232,7 @@ export function calculateDay(entry: TimeEntry, member: Staff): DayCalculation {
     scheduledMinutes,
     overtimeMinutes: balanceMinutes > 0 ? balanceMinutes : 0,
     deficitMinutes: balanceMinutes < 0 ? -balanceMinutes : 0,
+    usedFromBankMinutes,
     balanceMinutes,
     complete,
     variacoesPorMarcacao: tolerancia?.variacoesPorMarcacao ?? [],
@@ -245,7 +248,7 @@ export function calculateDay(entry: TimeEntry, member: Staff): DayCalculation {
 export function isBankUsageAdjustment(adjustment: { description?: string | null; minutes: number; workDate?: string | null }) {
   if (adjustment.minutes >= 0) return false
   const description = (adjustment.description ?? "").toLowerCase()
-  return /banco|compensat|sa[ií]da antecipada|entrada compensada|uso/.test(description)
+  return /banco|compensat|folga|sa[ií]da antecipada|entrada compensada|uso/.test(description)
 }
 
 /** Calcula o saldo líquido sem descontar duas vezes débitos que cobrem um déficit do próprio dia. */
@@ -267,15 +270,19 @@ export function calculateLedgerBalance(
     const calculation = calculateDay(entry, member)
     if (!calculation.complete) continue
     const date = String(entry.workDate).slice(0, 10)
-    const coveredDeficit = Math.min(calculation.deficitMinutes, datedDebits.get(date) ?? 0)
-    balance += calculation.balanceMinutes + coveredDeficit
-    if (coveredDeficit > 0) datedDebits.set(date, (datedDebits.get(date) ?? 0) - coveredDeficit)
+    const datedDebit = datedDebits.get(date) ?? 0
+    const coveredDeficit = Math.min(calculation.deficitMinutes, datedDebit)
+    const remainingDebit = Math.max(0, datedDebit - coveredDeficit)
+    const duplicateBankUsage = Math.min(remainingDebit, calculation.usedFromBankMinutes)
+    balance += calculation.balanceMinutes + coveredDeficit - calculation.usedFromBankMinutes
+    if (datedDebit > 0) datedDebits.set(date, remainingDebit - duplicateBankUsage)
   }
 
   const credits = adjustments.reduce((total, adjustment) => total + Math.max(0, adjustment.minutes), 0)
   const uncoveredDebits = [...datedDebits.values()].reduce((total, minutes) => total + minutes, 0)
   const undatedDebits = adjustments.reduce((total, adjustment) => total + (adjustment.minutes < 0 && !isBankUsageAdjustment(adjustment) ? Math.abs(adjustment.minutes) : 0), 0)
-  return balance + credits - uncoveredDebits - undatedDebits
+  const undatedBankUsage = adjustments.reduce((total, adjustment) => total + (adjustment.minutes < 0 && !adjustment.workDate && isBankUsageAdjustment(adjustment) ? Math.abs(adjustment.minutes) : 0), 0)
+  return balance + credits - uncoveredDebits - undatedDebits - undatedBankUsage
 }
 
 /** Agrega vários dias em totais. */
@@ -294,6 +301,8 @@ export function aggregateDays(
   let totalWorked = 0
   let totalOvertime = 0
   let totalDeficit = 0
+  let occurrenceBankUsage = 0
+  let adjustmentBankUsageCoveredByOccurrence = 0
   let daysCompleted = 0
   for (const entry of entries) {
     const calc = calculateDay(entry, member)
@@ -301,14 +310,18 @@ export function aggregateDays(
     const entryDate = String(entry.workDate).slice(0, 10)
     const datedDebit = adjustments.filter((adjustment) => String(adjustment.workDate ?? "").slice(0, 10) === entryDate && adjustment.minutes < 0 && isBankUsageAdjustment(adjustment)).reduce((total, adjustment) => total + Math.abs(adjustment.minutes), 0)
     const coveredDeficit = Math.min(calc.deficitMinutes, datedDebit)
+    const duplicateBankUsage = Math.min(Math.max(0, datedDebit - coveredDeficit), calc.usedFromBankMinutes)
     totalWorked += calc.workedMinutes
     totalOvertime += calc.overtimeMinutes
     totalDeficit += calc.deficitMinutes - coveredDeficit
+    occurrenceBankUsage += calc.usedFromBankMinutes
+    adjustmentBankUsageCoveredByOccurrence += duplicateBankUsage
     daysCompleted += 1
   }
 
   const credits = adjustments.filter((adjustment) => adjustment.minutes > 0).reduce((total, adjustment) => total + adjustment.minutes, 0)
-  const usedFromBank = adjustments.filter((adjustment) => adjustment.minutes < 0 && adjustment.workDate && isBankUsageAdjustment(adjustment)).reduce((total, adjustment) => total + Math.abs(adjustment.minutes), 0)
+  const adjustmentBankUsage = adjustments.filter((adjustment) => adjustment.minutes < 0 && isBankUsageAdjustment(adjustment)).reduce((total, adjustment) => total + Math.abs(adjustment.minutes), 0)
+  const usedFromBank = occurrenceBankUsage + adjustmentBankUsage - adjustmentBankUsageCoveredByOccurrence
   const undatedDebits = adjustments.filter((adjustment) => adjustment.minutes < 0 && !isBankUsageAdjustment(adjustment)).reduce((total, adjustment) => total + Math.abs(adjustment.minutes), 0)
   const availableOvertime = member.previousBalanceMinutes + totalOvertime + credits - usedFromBank
   const totalAvailableBalance = availableOvertime - totalDeficit - undatedDebits
